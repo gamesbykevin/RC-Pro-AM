@@ -28,7 +28,7 @@
         <pause>true</pause>
         <duration>15000</duration>
         <image>resources/images/menu/untitled.png</image>
-        <optionContainerRatio>0.65</optionContainerRatio>
+        <optionContainerRatio>0.95</optionContainerRatio>
         <optionBorderThickness>1.5</optionBorderThickness>
         <title>R.C. Pro-AM</title>
         <backgroundMusicLocation></backgroundMusicLocation>
@@ -45,7 +45,7 @@
         <pause>true</pause>
         <duration>10000</duration>
         <image>resources/images/menu/untitled.png</image>
-        <optionContainerRatio>0.65</optionContainerRatio>
+        <optionContainerRatio>0.95</optionContainerRatio>
         <optionBorderThickness>1.5</optionBorderThickness>
         <title>Options</title>
         <backgroundMusicLocation></backgroundMusicLocation>
@@ -84,7 +84,7 @@
         <pause>true</pause>
         <duration></duration>
         <image></image>
-        <optionContainerRatio>0.65</optionContainerRatio>
+        <optionContainerRatio>0.95</optionContainerRatio>
         <optionBorderThickness>1.5</optionBorderThickness>
         <title>Options</title>
         <backgroundMusicLocation></backgroundMusicLocation>
@@ -107,7 +107,7 @@
         <pause>true</pause>
         <duration></duration>
         <image></image>
-        <optionContainerRatio>0.65</optionContainerRatio>
+        <optionContainerRatio>0.95</optionContainerRatio>
         <optionBorderThickness>1.5</optionBorderThickness>
         <title>Reset?</title>
         <options name="Yes" next="CreateNewGame" id="CreateNewGame"></options>
@@ -121,7 +121,7 @@
         <pause>true</pause>
         <duration></duration>
         <image></image>
-        <optionContainerRatio>0.65</optionContainerRatio>
+        <optionContainerRatio>0.95</optionContainerRatio>
         <optionBorderThickness>1.5</optionBorderThickness>
         <title>Leave?</title>
         <options name="Yes" next="ExitGameConfirmed" id="MainTitle"></options>

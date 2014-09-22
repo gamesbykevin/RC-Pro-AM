@@ -20,8 +20,8 @@ public final class Shared
     public static final int INITIAL_HEIGHT = 384;
     
     //the game is originally programmed for these dimensions
-    public static final int ORIGINAL_WIDTH  = 512;
-    public static final int ORIGINAL_HEIGHT = 384;
+    public static final int ORIGINAL_WIDTH  = 256;
+    public static final int ORIGINAL_HEIGHT = 192;
     
     //show UPS/FPS counters
     public static final boolean DEBUG = true;

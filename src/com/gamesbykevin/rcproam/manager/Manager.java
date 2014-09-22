@@ -4,7 +4,9 @@ import com.gamesbykevin.framework.input.Keyboard;
 import com.gamesbykevin.framework.menu.Menu;
 import com.gamesbykevin.framework.util.*;
 
+import com.gamesbykevin.rcproam.car.Car;
 import com.gamesbykevin.rcproam.engine.Engine;
+import com.gamesbykevin.rcproam.map.Map;
 import com.gamesbykevin.rcproam.menu.CustomMenu;
 import com.gamesbykevin.rcproam.menu.CustomMenu.*;
 import com.gamesbykevin.rcproam.resources.*;
@@ -24,6 +26,11 @@ public final class Manager implements IManager
 {
     //where gameplay occurs
     private Rectangle window;
+    
+    //our race car
+    private Car car;
+    
+    private Map map;
     
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
@@ -55,7 +62,21 @@ public final class Manager implements IManager
     @Override
     public void reset(final Engine engine) throws Exception
     {
+        if (car == null)
+        {
+            car = new Car();
+            car.setLocation(engine.getMain().getScreen());
+            car.setImage(engine.getResources().getGameImage(GameImages.Keys.Truck));
+        }
         
+        if (map == null)
+        {
+            //create new map
+            map = new Map();
+            
+            //set the image map
+            map.setImage(engine.getResources().getGameImage(GameImages.Keys.Track01));
+        }
     }
     
     @Override
@@ -98,7 +119,16 @@ public final class Manager implements IManager
     @Override
     public void update(final Engine engine) throws Exception
     {
+        if (car != null)
+        {
+            car.update(engine);
+        }
         
+        if (map != null)
+        {
+            //update map perspective based on where our car is located
+            map.setLocation(car);
+        }
     }
     
     /**
@@ -108,6 +138,16 @@ public final class Manager implements IManager
     @Override
     public void render(final Graphics graphics)
     {
+        if (map != null)
+        {
+            //draw the map
+            map.render(graphics);
+        }
         
+        if (car != null)
+        {
+            //draw the race car
+            car.render(graphics);
+        }
     }
 }

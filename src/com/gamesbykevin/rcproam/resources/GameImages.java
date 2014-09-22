@@ -16,11 +16,16 @@ public final class GameImages extends ImageManager
      */
     public enum Keys
     {
-        Track01, Track02, Track03, Track04, Track05, 
+        Truck, 
+        
+        Track01, 
+        /*
+        Track02, Track03, Track04, Track05, 
         Track06, Track07, Track08, Track09, Track10, 
         Track11, Track12, Track13, Track14, Track15, 
         Track16, Track17, Track18, Track19, Track20, 
         Track21, Track22, Track23, Track24, 
+        */
     }
     
     public GameImages() throws Exception

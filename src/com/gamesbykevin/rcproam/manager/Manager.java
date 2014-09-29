@@ -54,9 +54,6 @@ public final class Manager implements IManager
         
         //are we playing random Mode or Campaign
         //random = CustomMenu.Toggle.values()[engine.getMenu().getOptionSelectionIndex(CustomMenu.LayerKey.Options, CustomMenu.OptionKey.Mode)];
-        
-        //reset game
-        reset(engine);
     }
     
     @Override
@@ -65,7 +62,7 @@ public final class Manager implements IManager
         if (car == null)
         {
             car = new Car();
-            car.setLocation(engine.getMain().getScreen());
+            car.setLocation(engine.getManager().getWindow());
             car.setImage(engine.getResources().getGameImage(GameImages.Keys.Truck));
         }
         
@@ -76,6 +73,9 @@ public final class Manager implements IManager
             
             //set the image map
             map.setImage(engine.getResources().getGameImage(GameImages.Keys.Track01));
+            
+            //set the starting point
+            map.setStartLocation(970, 819, engine.getManager().getWindow());
         }
     }
     
@@ -127,7 +127,7 @@ public final class Manager implements IManager
         if (map != null)
         {
             //update map perspective based on where our car is located
-            map.setLocation(car);
+            map.updateLocation(car);
         }
     }
     

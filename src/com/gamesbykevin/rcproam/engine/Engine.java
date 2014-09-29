@@ -157,7 +157,10 @@ public final class Engine implements KeyListener, MouseMotionListener, MouseList
                     {
                         //create new manager because at this point our resources have loaded
                         if (manager == null)
+                        {
                             manager = new Manager(this);
+                            manager.reset(this);
+                        }
 
                         //update main game logic
                         manager.update(this);

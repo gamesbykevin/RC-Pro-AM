@@ -7,6 +7,8 @@ import com.gamesbykevin.framework.input.Keyboard;
 
 import com.gamesbykevin.rcproam.engine.Engine;
 import com.gamesbykevin.rcproam.shared.IElement;
+import com.gamesbykevin.rcproam.shared.Shared;
+import java.awt.Color;
 
 import java.awt.Graphics;
 import java.awt.Polygon;
@@ -18,8 +20,17 @@ public class Car extends Sprite implements Disposable, IElement
     //frame of car
     private Polygon frame;
     
+    //starting angle when race begins
+    private static final int START_ANGLE = 45;
+    
     //the angle the object should be facing in radians NOT degrees, the facing direction here is WEST
-    private double angle = Math.toRadians(0);
+    private double angle = Math.toRadians(START_ANGLE);
+    
+    //the number of turns needed to the next 15 degrees
+    private int turnCount = (int)(TURN_INTERVAL / TURN_STEP);
+    
+    //the current count
+    private int count = 0;
     
     //things a car can do
     private boolean turnLeft = false;
@@ -27,25 +38,37 @@ public class Car extends Sprite implements Disposable, IElement
     private boolean accelerate = false;
     private boolean attack = false;
     
-    //how fast we can turn
-    protected final double TURN_RATE = .05;
+    //how many degrees is each turn between each 15 degree interval
+    private static final double TURN_STEP = 3.75;//1.875;
     
-    //how fast we can move
-    private final double DEFAULT_SPEED_RATE = .7;
+    //each turn will be 15 degrees
+    private static final double TURN_INTERVAL = 15;
     
-    //slow down rate
-    private final double SPEED_DECELERATE = 0.850;
+    //speed at which we are moving
+    private double speed = 0;
     
-    //size of the car
-    private static final int SIZE = 10;
+    //starting speed
+    private static final double STARTING_SPEED = 0.25;
     
-    //relative coordinates for the body of car
-    private final int[] XPOINTS = {-SIZE, SIZE, SIZE, -SIZE};
-    private final int[] YPOINTS = {-SIZE, -SIZE, SIZE, SIZE};
+    //maximum speed allowed
+    private static final double MAXIMUM_SPEED = 0.475;
+    
+    //the rate at which you accelerate to the maximum speed
+    private static final double ACCELERATE_SPEED = 0.001;
+    
+    //slow down rate while accelerating
+    private final double SPEED_DECELERATE = 0.9;
     
     //dimensions of car
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
+    
+    //size of the car
+    private static final int SIZE = (WIDTH / 2);
+    
+    //relative coordinates for the body of car
+    private final int[] XPOINTS = {-SIZE, SIZE, SIZE, -SIZE};
+    private final int[] YPOINTS = {-SIZE, -SIZE, SIZE, SIZE};
     
     //store the center location
     private double centerX, centerY;
@@ -59,9 +82,13 @@ public class Car extends Sprite implements Disposable, IElement
         Facing285, Facing300, Facing315, Facing330, Facing345, Crash
     }
     
-    public Car()
+    public Car() throws Exception
     {
         super();
+        
+        //the turn step must be a multiple of the turn interval
+        if (TURN_INTERVAL % TURN_STEP != 0)
+            throw new Exception("The turn step must be a multiple of the turn interval");
         
         //create frame of car
         this.frame = new Polygon(XPOINTS, YPOINTS, XPOINTS.length);
@@ -99,11 +126,11 @@ public class Car extends Sprite implements Disposable, IElement
         
         addAnimation(Direction.Crash, 1, 4);
         
-        //default facing angle
-        setAngle(Math.toRadians(45));
+        //make sure appropriate animation is displayed
+        correctAnimation();
     }
     
-    protected void addAnimation(final Direction direction, final int col, final int row)
+    protected final void addAnimation(final Direction direction, final int col, final int row)
     {
         try
         {
@@ -141,19 +168,41 @@ public class Car extends Sprite implements Disposable, IElement
         this.angle = angle;
     }
     
+    private boolean hasAccelerate()
+    {
+        return this.accelerate;
+    }
+    
+    private void setAccelerate(final boolean accelerate)
+    {
+        this.accelerate = accelerate;
+    }
+
+    private double getSpeed()
+    {
+        return this.speed;
+    }
+    
+    private void setSpeed(final double speed)
+    {
+        this.speed = speed;
+    }
+    
     /**
-     * Determine the speed of car and update the location
+     * Determine the speed of car and update the location.<br>
+     * We will take the facing angle into consideration
      */
     private void calculateVelocity()
     {
         //if we are moving calculate velocity
-        if (accelerate)
+        if (hasAccelerate())
         {
-            setVelocityX(getVelocityX() + (DEFAULT_SPEED_RATE * Math.cos(getAngle())));
-            setVelocityY(getVelocityY() + (DEFAULT_SPEED_RATE * Math.sin(getAngle())));
+            //set the direction to head in
+            setVelocityX(getVelocityX() + (getSpeed() * Math.cos(getAngle())));
+            setVelocityY(getVelocityY() + (getSpeed() * Math.sin(getAngle())));
         }
         
-        //if we aren't moving slow down the speed
+        //keep the velocity from getting too high
         setVelocityX(getVelocityX() * SPEED_DECELERATE);
         setVelocityY(getVelocityY() * SPEED_DECELERATE);
     }
@@ -215,113 +264,140 @@ public class Car extends Sprite implements Disposable, IElement
     }
     
     /**
-     * Assign the appropriate animation based on angle facing
+     * Make sure the angle stays between the 0 - 360 degree range, and here is doing the same for radians
      */
-    private void correctAnimation() throws Exception
+    private void correctAngle()
+    {
+        //this is to keep the angle within range
+        if (getAngle() > (2 * Math.PI))
+            setAngle(getAngle() - (2 * Math.PI));
+        if (getAngle() < 0)
+            setAngle(getAngle() + (2 * Math.PI));
+    }
+    
+    /**
+     * Assign the appropriate animation based on the angle
+     */
+    private void correctAnimation()
     {
         //convert to degrees
-        double degrees = Math.toDegrees(getAngle());
+        final double facingAngle = Math.toDegrees(getAngle());
         
-        //determine the animation based on the angle facing
-        if (degrees >= 0 && degrees < 15)
+        //round to nearest degree
+        final double degrees = Math.round(facingAngle);
+        
+        try
         {
-            getSpriteSheet().setCurrent(Direction.Facing270);
+            if (degrees == 0)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing270);
+            }
+            else if (degrees == 15)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing285);
+            }
+            else if (degrees == 30)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing300);
+            }
+            else if (degrees == 45)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing315);
+            }
+            else if (degrees == 60)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing330);
+            }
+            else if (degrees == 75)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing345);
+            }
+            else if (degrees == 90)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing000);
+            }
+            else if (degrees == 105)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing015);
+            }
+            else if (degrees == 120)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing030);
+            }
+            else if (degrees == 135)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing045);
+            }
+            else if (degrees == 150)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing060);
+            }
+            else if (degrees == 165)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing075);
+            }
+            else if (degrees == 180)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing090);
+            }
+            else if (degrees == 195)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing105);
+            }
+            else if (degrees == 210)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing120);
+            }
+            else if (degrees == 225)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing135);
+            }
+            else if (degrees == 240)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing150);
+            }
+            else if (degrees == 255)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing165);
+            }
+            else if (degrees == 270)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing180);
+            }
+            else if (degrees == 285)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing195);
+            }
+            else if (degrees == 300)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing210);
+            }
+            else if (degrees == 315)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing225);
+            }
+            else if (degrees == 330)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing240);
+            }
+            else if (degrees == 345)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing255);
+            }
+            else if (degrees == 360)
+            {
+                getSpriteSheet().setCurrent(Direction.Facing270);
+            }
+            else
+            {
+                //if the angle isn't caught and we are debgging, we will throw an exception
+                if (Shared.DEBUG)
+                    throw new Exception("angle not caught here: " + degrees);
+            }
         }
-        else if (degrees >= 15 && degrees < 30)
+        catch (Exception e)
         {
-            getSpriteSheet().setCurrent(Direction.Facing285);
-        }
-        else if (degrees >= 30 && degrees < 45)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing300);
-        }
-        else if (degrees >= 45 && degrees < 60)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing315);
-        }
-        else if (degrees >= 60 && degrees < 75)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing330);
-        }
-        else if (degrees >= 75 && degrees < 90)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing345);
-        }
-        else if (degrees >= 90 && degrees < 105)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing000);
-        }
-        else if (degrees >= 105 && degrees < 120)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing015);
-        }
-        else if (degrees >= 120 && degrees < 135)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing030);
-        }
-        else if (degrees >= 135 && degrees < 150)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing045);
-        }
-        else if (degrees >= 150 && degrees < 165)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing060);
-        }
-        else if (degrees >= 165 && degrees < 180)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing075);
-        }
-        else if (degrees >= 180 && degrees < 195)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing090);
-        }
-        else if (degrees >= 195 && degrees < 210)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing105);
-        }
-        else if (degrees >= 210 && degrees < 225)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing120);
-        }
-        else if (degrees >= 225 && degrees < 240)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing135);
-        }
-        else if (degrees >= 240 && degrees < 255)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing150);
-        }
-        else if (degrees >= 255 && degrees < 270)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing165);
-        }
-        else if (degrees >= 270 && degrees < 285)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing180);
-        }
-        else if (degrees >= 285 && degrees < 300)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing195);
-        }
-        else if (degrees >= 300 && degrees < 315)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing210);
-        }
-        else if (degrees >= 315 && degrees < 330)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing225);
-        }
-        else if (degrees >= 330 && degrees < 345)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing240);
-        }
-        else if (degrees >= 345 && degrees < 361)
-        {
-            getSpriteSheet().setCurrent(Direction.Facing255);
-        }
-        else
-        {
-            throw new Exception("angle not caught here: " + degrees);
+            e.printStackTrace();
         }
     }
     
@@ -339,26 +415,33 @@ public class Car extends Sprite implements Disposable, IElement
         
         final Keyboard keyboard = engine.getKeyboard();
         
+        //can only do one or the other
         if (keyboard.hasKeyPressed(KeyEvent.VK_RIGHT))
         {
             turnRight = true;
+            turnLeft = false;
         }
         else if (keyboard.hasKeyPressed(KeyEvent.VK_LEFT))
         {
+            turnRight = false;
             turnLeft = true;
         }
-        else if (keyboard.hasKeyPressed(KeyEvent.VK_A))
+        
+        //are we just starting to accelerate
+        boolean start = (!hasAccelerate());
+        
+        if (keyboard.hasKeyPressed(KeyEvent.VK_A))
         {
-            accelerate = true;
+            setAccelerate(true);
         }
-        else if (keyboard.hasKeyPressed(KeyEvent.VK_S))
-        {
+        
+        if (keyboard.hasKeyPressed(KeyEvent.VK_S))
             attack = true;
-        }
         
         if (keyboard.hasKeyReleased(KeyEvent.VK_RIGHT))
         {
             turnRight = false;
+            count = 0;
             keyboard.removeKeyPressed(KeyEvent.VK_RIGHT);
             keyboard.removeKeyReleased(KeyEvent.VK_RIGHT);
         }
@@ -366,39 +449,60 @@ public class Car extends Sprite implements Disposable, IElement
         if (keyboard.hasKeyReleased(KeyEvent.VK_LEFT))
         {
             turnLeft = false;
+            count = 0;
             keyboard.removeKeyPressed(KeyEvent.VK_LEFT);
             keyboard.removeKeyReleased(KeyEvent.VK_LEFT);
         }
         
         if (keyboard.hasKeyReleased(KeyEvent.VK_A))
-        {
-            accelerate = false;
-        }
+            setAccelerate(false);
         
         if (keyboard.hasKeyReleased(KeyEvent.VK_S))
-        {
             attack = false;
-        }
         
         if (turnRight)
         {
-            setAngle(getAngle() + TURN_RATE);
-            
-            System.out.println("Turning right");
+            if (count++ == turnCount)
+            {
+                turn(Math.toRadians(TURN_INTERVAL));
+                count = 0;
+            }
         }
         else if (turnLeft)
         {
-            setAngle(getAngle() - TURN_RATE);
-            
-            System.out.println("Turning left");
+            if (count++ == turnCount)
+            {
+                turn(-Math.toRadians(TURN_INTERVAL));
+                count = 0;
+            }
         }
         
-        //this is to keep the angle within range
-        if (getAngle() > (2 * Math.PI))
-            setAngle(getAngle() - (2 * Math.PI));
-        if (getAngle() < 0)
-            setAngle(getAngle() + (2 * Math.PI));
+        if (hasAccelerate())
+        {
+            //if just starting, set starting speed
+            if (start)
+                setSpeed(STARTING_SPEED);
+            
+            setSpeed(getSpeed() + ACCELERATE_SPEED);
+            
+            if (getSpeed() > MAXIMUM_SPEED)
+                setSpeed(MAXIMUM_SPEED);
+        }
+    }
+    
+    /**
+     * Turn the car.
+     * @param angle The angle in radians
+     */
+    private void turn(final double angle)
+    {
+        //set the new angle
+        setAngle(getAngle() + angle);
         
+        //make sure the angle stays within range
+        correctAngle();
+        
+        //make sure appropriate animation is displayed
         correctAnimation();
     }
     

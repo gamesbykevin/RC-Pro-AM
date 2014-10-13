@@ -48,13 +48,15 @@ public class Car extends Sprite implements Disposable, IElement
     private double speed = 0;
     
     //starting speed
-    private static final double STARTING_SPEED = 0.25;
+    //private static final double STARTING_SPEED = 0.25;
+    private static final double STARTING_SPEED = 0.001;
     
     //maximum speed allowed
-    private static final double MAXIMUM_SPEED = 0.475;
+    //private static final double MAXIMUM_SPEED = 0.475;
+    private static final double MAXIMUM_SPEED = 0.02;
     
     //the rate at which you accelerate to the maximum speed
-    private static final double ACCELERATE_SPEED = 0.001;
+    private static final double ACCELERATE_SPEED = 0.003;
     
     //slow down rate while accelerating
     private final double SPEED_DECELERATE = 0.9;
@@ -401,6 +403,15 @@ public class Car extends Sprite implements Disposable, IElement
         }
     }
     
+    /**
+     * Update the column, row location
+     */
+    private void updateLocation()
+    {
+        super.setCol(getCol() + getVelocityX());
+        super.setRow(getRow() + getVelocityY());
+    }
+    
     @Override
     public void update(final Engine engine) throws Exception
     {
@@ -408,7 +419,7 @@ public class Car extends Sprite implements Disposable, IElement
         calculateVelocity();
         
         //update location
-        super.update();
+        updateLocation();
         
         //update polygon coordinates
         updatePolygon();
@@ -509,6 +520,8 @@ public class Car extends Sprite implements Disposable, IElement
     @Override
     public void render(final Graphics graphics)
     {
+        renderMapLocation(graphics);
+        
         //store original location
         double tmpX = getX();
         double tmpY = getY();
@@ -523,5 +536,17 @@ public class Car extends Sprite implements Disposable, IElement
         //restore original location
         setX(tmpX);
         setY(tmpY);
+    }
+    
+    private void renderMapLocation(final Graphics graphics)
+    {
+        final int startX = 0;
+        final int startY = 0;
+        
+        final int w = 1;
+        final int h = 1;
+        
+        graphics.setColor(Color.RED);
+        graphics.drawRect(startX + (int)(getCol() * w), startY + (int)(getRow() * h), w, h);
     }
 }

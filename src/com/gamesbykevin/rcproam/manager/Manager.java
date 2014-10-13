@@ -6,7 +6,8 @@ import com.gamesbykevin.framework.util.*;
 
 import com.gamesbykevin.rcproam.car.Car;
 import com.gamesbykevin.rcproam.engine.Engine;
-import com.gamesbykevin.rcproam.map.Map;
+import com.gamesbykevin.rcproam.map.StaticMap;
+import com.gamesbykevin.rcproam.map.track.*;
 import com.gamesbykevin.rcproam.menu.CustomMenu;
 import com.gamesbykevin.rcproam.menu.CustomMenu.*;
 import com.gamesbykevin.rcproam.resources.*;
@@ -30,7 +31,8 @@ public final class Manager implements IManager
     //our race car
     private Car car;
     
-    private Map map;
+    //the map of the current track
+    private StaticMap staticMap;
     
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
@@ -66,16 +68,25 @@ public final class Manager implements IManager
             car.setImage(engine.getResources().getGameImage(GameImages.Keys.Truck));
         }
         
-        if (map == null)
+        if (staticMap == null)
         {
             //create new map
-            map = new Map();
+            staticMap = new StaticMap();
             
             //set the image map
-            map.setImage(engine.getResources().getGameImage(GameImages.Keys.Track01));
+            staticMap.setImage(engine.getResources().getGameImage(GameImages.Keys.Track01));
+            
+            //analyze the mini-map to create the track
+            staticMap.createTrack(421, 801);
             
             //set the starting point
-            map.setStartLocation(970, 819, engine.getManager().getWindow());
+            staticMap.setStartLocation(970, 819, engine.getManager().getWindow());
+            
+            car.setCol(47);
+            car.setRow(34);
+            //car.setCol(0);
+            //car.setRow(0);
+            
         }
     }
     
@@ -124,10 +135,28 @@ public final class Manager implements IManager
             car.update(engine);
         }
         
-        if (map != null)
+        if (staticMap != null)
         {
             //update map perspective based on where our car is located
-            map.updateLocation(car);
+            //staticMap.updateLocation(car);
+            if (staticMap.getImage() != null)
+            {
+                //get the velocity
+                final double vx = car.getVelocityX();
+                final double vy = car.getVelocityY();
+                
+                final double vx2 = (staticMap.getImage().getWidth(null) / staticMap.getTrack().getColumns()) * vx;
+                final double vy2 = (staticMap.getImage().getHeight(null) / staticMap.getTrack().getRows()) * vy;
+                
+                car.setVelocityX(vx2);
+                car.setVelocityY(vy2);
+                
+                //update map location
+                staticMap.updateLocation(car);
+                
+                //set the velocity back
+                car.setVelocity(vx, vy);
+            }
         }
     }
     
@@ -138,10 +167,10 @@ public final class Manager implements IManager
     @Override
     public void render(final Graphics graphics)
     {
-        if (map != null)
+        if (staticMap != null)
         {
             //draw the map
-            map.render(graphics);
+            staticMap.render(graphics);
         }
         
         if (car != null)

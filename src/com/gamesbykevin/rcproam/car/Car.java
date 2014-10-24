@@ -39,7 +39,7 @@ public class Car extends Sprite implements Disposable, IElement
     private boolean attack = false;
     
     //how many degrees is each turn between each 15 degree interval
-    private static final double TURN_STEP = 3.75;//1.875;
+    private static final double TURN_STEP = 3.75;
     
     //each turn will be 15 degrees
     private static final double TURN_INTERVAL = 15;
@@ -48,15 +48,13 @@ public class Car extends Sprite implements Disposable, IElement
     private double speed = 0;
     
     //starting speed
-    //private static final double STARTING_SPEED = 0.25;
     private static final double STARTING_SPEED = 0.001;
     
     //maximum speed allowed
-    //private static final double MAXIMUM_SPEED = 0.475;
     private static final double MAXIMUM_SPEED = 0.02;
     
     //the rate at which you accelerate to the maximum speed
-    private static final double ACCELERATE_SPEED = 0.003;
+    private static final double ACCELERATE_SPEED = 0.00005;
     
     //slow down rate while accelerating
     private final double SPEED_DECELERATE = 0.9;
@@ -74,6 +72,10 @@ public class Car extends Sprite implements Disposable, IElement
     
     //store the center location
     private double centerX, centerY;
+    
+    //the velocity of the car moving on the mini-map
+    private double mapVelocityX = 0;
+    private double mapVelocityY = 0;
     
     public enum Direction
     {
@@ -165,6 +167,10 @@ public class Car extends Sprite implements Disposable, IElement
         return this.angle;
     }
     
+    /**
+     * Assign the angle
+     * @param angle Angle in Radians
+     */
     private void setAngle(final double angle)
     {
         this.angle = angle;
@@ -191,8 +197,8 @@ public class Car extends Sprite implements Disposable, IElement
     }
     
     /**
-     * Determine the speed of car and update the location.<br>
-     * We will take the facing angle into consideration
+     * Determine the direction based on the existing <br>
+     * velocity, facing angle and speed of car.
      */
     private void calculateVelocity()
     {
@@ -203,10 +209,20 @@ public class Car extends Sprite implements Disposable, IElement
             setVelocityX(getVelocityX() + (getSpeed() * Math.cos(getAngle())));
             setVelocityY(getVelocityY() + (getSpeed() * Math.sin(getAngle())));
         }
-        
-        //keep the velocity from getting too high
+    }
+    
+    /**
+     * Slow down the speed of the car
+     */
+    private void applyGravity()
+    {
+        //slow down speed
         setVelocityX(getVelocityX() * SPEED_DECELERATE);
         setVelocityY(getVelocityY() * SPEED_DECELERATE);
+        
+        //also slow down speed on mini-map
+        this.mapVelocityX = (mapVelocityX * SPEED_DECELERATE);
+        this.mapVelocityY = (mapVelocityY * SPEED_DECELERATE);
     }
     
     /**
@@ -404,22 +420,53 @@ public class Car extends Sprite implements Disposable, IElement
     }
     
     /**
-     * Update the column, row location
+     * Update the column, row for the mini-map
      */
-    private void updateLocation()
+    private void updateMiniMapLocation()
     {
-        super.setCol(getCol() + getVelocityX());
-        super.setRow(getRow() + getVelocityY());
+        //store the angle
+        final double tmpAngle = getAngle();
+        
+        //assign the temp angle
+        setAngle(tmpAngle + Math.toRadians(135));
+        
+        //store the existing velocity
+        final double vx = this.getVelocityX();
+        final double vy = this.getVelocityY();
+        
+        //set the mini-map velocity
+        this.setVelocityX(this.mapVelocityX);
+        this.setVelocityY(this.mapVelocityY);
+        
+        //calculate velocity
+        calculateVelocity();
+        
+        //get the new calculated velocity
+        this.mapVelocityX = this.getVelocityX();
+        this.mapVelocityY = this.getVelocityY();
+        
+        //update location on mini-map
+        super.setCol(getCol() + (getVelocityX() * .5));
+        super.setRow(getRow() + (getVelocityY() * .5));
+        
+        //restore the velocity
+        this.setVelocity(vx, vy);
+        
+        //restore facing angle
+        this.setAngle(tmpAngle);
     }
     
     @Override
     public void update(final Engine engine) throws Exception
     {
+        //update location on mini-map
+        updateMiniMapLocation();
+        
         //calculate velocity
         calculateVelocity();
         
-        //update location
-        updateLocation();
+        //apply gravity
+        applyGravity();
         
         //update polygon coordinates
         updatePolygon();
@@ -520,7 +567,7 @@ public class Car extends Sprite implements Disposable, IElement
     @Override
     public void render(final Graphics graphics)
     {
-        renderMapLocation(graphics);
+        //renderMapLocation(graphics);
         
         //store original location
         double tmpX = getX();
@@ -538,11 +585,8 @@ public class Car extends Sprite implements Disposable, IElement
         setY(tmpY);
     }
     
-    private void renderMapLocation(final Graphics graphics)
+    private void renderMapLocation(final Graphics graphics, final int startX, final int startY)
     {
-        final int startX = 0;
-        final int startY = 0;
-        
         final int w = 1;
         final int h = 1;
         

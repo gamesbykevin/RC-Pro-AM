@@ -4,9 +4,7 @@
     <image id="Cursor">resources/images/game/cursor.gif</image>
     -->
     <image id="Truck">resources/images/game/cars/truck.gif</image>
-    
     <image id="Track01">resources/images/game/maps/RCProAmMapLevel01BG.png</image>
-    <!--
     <image id="Track02">resources/images/game/maps/RCProAmMapLevel02BG.png</image>
     <image id="Track03">resources/images/game/maps/RCProAmMapLevel03BG.png</image>
     <image id="Track04">resources/images/game/maps/RCProAmMapLevel04BG.png</image>
@@ -30,5 +28,4 @@
     <image id="Track22">resources/images/game/maps/RCProAmMapLevel22BG.png</image>
     <image id="Track23">resources/images/game/maps/RCProAmMapLevel23BG.png</image>
     <image id="Track24">resources/images/game/maps/RCProAmMapLevel24BG.png</image>
-    -->
 </images>

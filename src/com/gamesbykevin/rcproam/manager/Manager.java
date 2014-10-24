@@ -6,8 +6,7 @@ import com.gamesbykevin.framework.util.*;
 
 import com.gamesbykevin.rcproam.car.Car;
 import com.gamesbykevin.rcproam.engine.Engine;
-import com.gamesbykevin.rcproam.map.StaticMap;
-import com.gamesbykevin.rcproam.map.track.*;
+import com.gamesbykevin.rcproam.map.Maps;
 import com.gamesbykevin.rcproam.menu.CustomMenu;
 import com.gamesbykevin.rcproam.menu.CustomMenu.*;
 import com.gamesbykevin.rcproam.resources.*;
@@ -31,8 +30,8 @@ public final class Manager implements IManager
     //our race car
     private Car car;
     
-    //the map of the current track
-    private StaticMap staticMap;
+    //the maps of the tracks
+    private Maps maps;
     
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
@@ -68,26 +67,15 @@ public final class Manager implements IManager
             car.setImage(engine.getResources().getGameImage(GameImages.Keys.Truck));
         }
         
-        if (staticMap == null)
+        if (maps == null)
         {
-            //create new map
-            staticMap = new StaticMap();
-            
-            //set the image map
-            staticMap.setImage(engine.getResources().getGameImage(GameImages.Keys.Track01));
-            
-            //analyze the mini-map to create the track
-            staticMap.createTrack(421, 801);
-            
-            //set the starting point
-            staticMap.setStartLocation(970, 819, engine.getManager().getWindow());
-            
-            car.setCol(47);
-            car.setRow(34);
-            //car.setCol(0);
-            //car.setRow(0);
-            
+            maps = new Maps(engine.getResources());
         }
+    }
+    
+    public Car getCar()
+    {
+        return this.car;
     }
     
     @Override
@@ -130,32 +118,27 @@ public final class Manager implements IManager
     @Override
     public void update(final Engine engine) throws Exception
     {
-        if (car != null)
+        if (!maps.isLoading())
         {
-            car.update(engine);
+            if (car != null)
+            {
+                car.update(engine);
+            }
         }
         
-        if (staticMap != null)
+        if (maps != null)
         {
-            //update map perspective based on where our car is located
-            //staticMap.updateLocation(car);
-            if (staticMap.getImage() != null)
+            if (maps.isLoading())
             {
-                //get the velocity
-                final double vx = car.getVelocityX();
-                final double vy = car.getVelocityY();
+                maps.update(engine);
                 
-                final double vx2 = (staticMap.getImage().getWidth(null) / staticMap.getTrack().getColumns()) * vx;
-                final double vy2 = (staticMap.getImage().getHeight(null) / staticMap.getTrack().getRows()) * vy;
-                
-                car.setVelocityX(vx2);
-                car.setVelocityY(vy2);
-                
-                //update map location
-                staticMap.updateLocation(car);
-                
-                //set the velocity back
-                car.setVelocity(vx, vy);
+                //if no longer loading, place car
+                if (!maps.isLoading())
+                    maps.placeCar(car);
+            }
+            else
+            {
+                maps.update(engine);
             }
         }
     }
@@ -167,16 +150,22 @@ public final class Manager implements IManager
     @Override
     public void render(final Graphics graphics)
     {
-        if (staticMap != null)
+        if (maps != null)
         {
             //draw the map
-            staticMap.render(graphics);
+            maps.render(graphics);
+            
+            //draw the mini-map
+            //maps.renderMiniMap(graphics, 0, 0);
         }
         
-        if (car != null)
+        if (!maps.isLoading())
         {
-            //draw the race car
-            car.render(graphics);
+            if (car != null)
+            {
+                //draw the race car
+                car.render(graphics);
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.gamesbykevin.rcproam.map.track;
+package com.gamesbykevin.rcproam.map;
 
 import com.gamesbykevin.framework.resources.Disposable;
 import java.awt.Color;
@@ -23,7 +23,7 @@ public final class Track implements Disposable
      * @param width The pixel width of 1 cell
      * @param height The pixel height of 1 cell
      */
-    public Track(final int columns, final int rows, final int width, final int height)
+    protected Track(final int columns, final int rows, final int width, final int height)
     {
         this.columns = columns;
         this.rows = rows;
@@ -60,7 +60,7 @@ public final class Track implements Disposable
      * @param row Row
      * @param result true if this is part of the road, false otherwise
      */
-    public void setRoad(final int column, final int row, final boolean result)
+    protected void setRoad(final int column, final int row, final boolean result)
     {
         this.key[row][column] = result;
     }
@@ -71,17 +71,30 @@ public final class Track implements Disposable
         this.key = null;
     }
     
-    public void renderTest(final Graphics graphics)
+    /**
+     * Render the mini-map of this track
+     * @param graphics Graphics object
+     * @param startX x-coordinate where we want to draw the mini-map
+     * @param startY y-coordinate where we want to draw the mini-map
+     */
+    protected void renderMiniMap(final Graphics graphics, final int startX, final int startY)
     {
-        final int startX = 0;
-        final int startY = 0;
-        
         for (int row = 0; row < getRows(); row++)
         {
             for (int col = 0; col < getColumns(); col++)
             {
-                graphics.setColor((key[row][col]) ? Color.WHITE : Color.BLACK);
-                graphics.drawRect(startX + (col * getWidth()), startY + (row * getHeight()), getWidth(), getHeight());
+                if (key[row][col])
+                {
+                    //if true, then this is part of the road
+                    graphics.setColor(Color.WHITE);
+                    graphics.drawRect(startX + (col * getWidth()), startY + (row * getHeight()), getWidth(), getHeight());
+                }
+                else
+                {
+                    //anything else is off the road
+                    graphics.setColor(Color.BLACK);
+                    graphics.drawRect(startX + (col * getWidth()), startY + (row * getHeight()), getWidth(), getHeight());
+                }
             }
         }
     }

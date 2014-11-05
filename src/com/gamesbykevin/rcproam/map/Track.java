@@ -1,5 +1,7 @@
 package com.gamesbykevin.rcproam.map;
 
+import com.gamesbykevin.rcproam.map.Tile;
+import com.gamesbykevin.framework.base.Cell;
 import com.gamesbykevin.framework.resources.Disposable;
 import java.awt.Color;
 
@@ -14,7 +16,11 @@ public final class Track implements Disposable
     private final int width, height;
     
     //the track
-    private boolean key[][];
+    private Tile key[][];
+    
+    //the color for the road and out of bounds
+    private static final Color ROAD_COLOR = Color.GRAY;
+    private static final Color OFF_ROAD_COLOR = Color.GREEN.darker();
     
     /**
      * Create a new track of the specified dimensions
@@ -31,7 +37,7 @@ public final class Track implements Disposable
         this.height = height;
         
         //create new track
-        this.key = new boolean[rows][columns];
+        this.key = new Tile[rows][columns];
     }
     
     public int getColumns()
@@ -56,13 +62,138 @@ public final class Track implements Disposable
     
     /**
      * Assign a cell of the track as road or not road
+     * @param cell Location containing the column, row
+     * @param result true if this is part of the road, false otherwise
+     */
+    protected void setRoad(final Cell cell, final boolean result)
+    {
+        setRoad(cell.getCol(), cell.getRow(), result);
+    }
+    
+    /**
+     * Assign a cell of the track as road or not road
+     * @param column Column
+     * @param row Row
+     * @param result true if this is part of the road, false otherwise
+     */
+    protected void setRoad(final double column, final double row, final boolean result)
+    {
+        setRoad((int)column, (int)row, result);
+    }
+    
+    /**
+     * Assign a cell of the track as road or not road
      * @param column Column
      * @param row Row
      * @param result true if this is part of the road, false otherwise
      */
     protected void setRoad(final int column, final int row, final boolean result)
     {
-        this.key[row][column] = result;
+        if (this.key[row][column] == null)
+        {
+            this.key[row][column] = new Tile(result);
+        }
+        else
+        {
+            this.key[row][column].setRoad(result);
+        }
+    }
+    
+    /**
+     * Is the specified location part of the road
+     * @param column
+     * @param row
+     * @return true if part of the road, false otherwise
+     */
+    public boolean isRoad(final double column, final double row)
+    {
+        return isRoad((int)column, (int)row);
+    }
+    
+    /**
+     * Is the specified location part of the road
+     * @param column
+     * @param row
+     * @return true if part of the road, false otherwise
+     */
+    public boolean isRoad(final int column, final int row)
+    {
+        return key[row][column].isRoad();
+    }
+    
+    /**
+     * Has this tile in the track already been visited
+     * @param column
+     * @param row
+     * @return true if so, false otherwise
+     */
+    protected boolean hasVisited(final int column, final int row)
+    {
+        return key[row][column].hasVisited();
+    }
+    
+    /**
+     * Mark a tile as visited/not-visited
+     * @param column
+     * @param row
+     * @param result 
+     */
+    protected void setVisited(final int column, final int row, final boolean result)
+    {
+        key[row][column].setVisited(result);
+    }
+    
+    /**
+     * Set the cost of a tile
+     * @param cell Location
+     * @param cost The distance from the specified location back to the starting point
+     */
+    protected void setCost(final Cell cell, final int cost)
+    {
+        setCost((int)cell.getCol(), (int)cell.getRow(), cost);
+    }
+    
+    /**
+     * Set the cost of a tile
+     * @param column
+     * @param row
+     * @param cost The distance from the specified location back to the starting point
+     */
+    protected void setCost(final double column, final double row, final int cost)
+    {
+        setCost((int)column, (int)row, cost);
+    }
+    
+    /**
+     * Set the cost of a tile
+     * @param column
+     * @param row
+     * @param cost The distance from the specified location back to the starting point
+     */
+    protected void setCost(final int column, final int row, final int cost)
+    {
+        key[row][column].setCost(cost);
+    }
+    
+    /**
+     * Get the cost of a tile
+     * @param cell Location
+     * @return cost The distance from the specified location back to the starting point
+     */
+    protected int getCost(final Cell cell)
+    {
+        return getCost((int)cell.getCol(), (int)cell.getRow());
+    }
+    
+    /**
+     * Get the cost of a tile
+     * @param column
+     * @param row
+     * @return cost The distance from the specified location back to the starting point
+     */
+    protected int getCost(final int column, final int row)
+    {
+        return key[row][column].getCost();
     }
     
     @Override
@@ -83,16 +214,16 @@ public final class Track implements Disposable
         {
             for (int col = 0; col < getColumns(); col++)
             {
-                if (key[row][col])
+                if (isRoad(col, row))
                 {
                     //if true, then this is part of the road
-                    graphics.setColor(Color.WHITE);
+                    graphics.setColor(ROAD_COLOR);
                     graphics.drawRect(startX + (col * getWidth()), startY + (row * getHeight()), getWidth(), getHeight());
                 }
                 else
                 {
                     //anything else is off the road
-                    graphics.setColor(Color.BLACK);
+                    graphics.setColor(OFF_ROAD_COLOR);
                     graphics.drawRect(startX + (col * getWidth()), startY + (row * getHeight()), getWidth(), getHeight());
                 }
             }

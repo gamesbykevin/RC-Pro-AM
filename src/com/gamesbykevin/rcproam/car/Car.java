@@ -6,20 +6,17 @@ import com.gamesbykevin.framework.resources.Disposable;
 import com.gamesbykevin.framework.input.Keyboard;
 
 import com.gamesbykevin.rcproam.engine.Engine;
+import com.gamesbykevin.rcproam.map.Track;
 import com.gamesbykevin.rcproam.shared.IElement;
 import com.gamesbykevin.rcproam.shared.Shared;
 import java.awt.Color;
 
 import java.awt.Graphics;
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 
-public class Car extends Sprite implements Disposable, IElement
+public abstract class Car extends Sprite implements Disposable, IElement
 {
-    //frame of car
-    private Polygon frame;
-    
     //starting angle when race begins
     private static final int START_ANGLE = 45;
     
@@ -38,37 +35,41 @@ public class Car extends Sprite implements Disposable, IElement
     private boolean accelerate = false;
     private boolean attack = false;
     
+    private final boolean human;
+    
     //how many degrees is each turn between each 15 degree interval
     private static final double TURN_STEP = 3.75;
     
     //each turn will be 15 degrees
-    private static final double TURN_INTERVAL = 15;
+    protected static final double TURN_INTERVAL = 15;
     
     //speed at which we are moving
     private double speed = 0;
     
-    //starting speed
-    private static final double STARTING_SPEED = 0.001;
+    //the maximum speed the car can move
+    private double maximumSpeed = MAXIMUM_SPEED_ROAD;
     
-    //maximum speed allowed
-    private static final double MAXIMUM_SPEED = 0.02;
+    //starting speed
+    protected static final double STARTING_SPEED = 0.0025;
+    
+    //maximum speed allowed while driving on the road
+    private static final double MAXIMUM_SPEED_ROAD = 0.0275;
+    
+    //maximum speed allowed while driving off road
+    private static final double MAXIMUM_SPEED_OFF_ROAD = 0.00125;
     
     //the rate at which you accelerate to the maximum speed
-    private static final double ACCELERATE_SPEED = 0.00005;
+    protected static final double ACCELERATE_SPEED = 0.00005;
     
-    //slow down rate while accelerating
-    private final double SPEED_DECELERATE = 0.9;
+    //velocity slow down rate
+    private final double VELOCITY_DECELERATE = 0.9;
+    
+    //speed slow down rate
+    private final double SPEED_DECELERATE = 0.975;
     
     //dimensions of car
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
-    
-    //size of the car
-    private static final int SIZE = (WIDTH / 2);
-    
-    //relative coordinates for the body of car
-    private final int[] XPOINTS = {-SIZE, SIZE, SIZE, -SIZE};
-    private final int[] YPOINTS = {-SIZE, -SIZE, SIZE, SIZE};
     
     //store the center location
     private double centerX, centerY;
@@ -86,16 +87,24 @@ public class Car extends Sprite implements Disposable, IElement
         Facing285, Facing300, Facing315, Facing330, Facing345, Crash
     }
     
-    public Car() throws Exception
+    //the color of the car to be displayed on the mini map
+    private Color carColor;
+    
+    /**
+     * Create a new car
+     * @param human Is the car human
+     * @throws Exception Exception will be thrown if the turn interval is not a multiple of the turn step
+     */
+    protected Car(final boolean human) throws Exception
     {
         super();
         
+        //is the car controlled by a human
+        this.human = human;
+                
         //the turn step must be a multiple of the turn interval
         if (TURN_INTERVAL % TURN_STEP != 0)
             throw new Exception("The turn step must be a multiple of the turn interval");
-        
-        //create frame of car
-        this.frame = new Polygon(XPOINTS, YPOINTS, XPOINTS.length);
         
         //create sprite sheet
         super.createSpriteSheet();
@@ -132,6 +141,73 @@ public class Car extends Sprite implements Disposable, IElement
         
         //make sure appropriate animation is displayed
         correctAnimation();
+    }
+    
+    /**
+     * Is this car controlled by a human
+     * @return true if this car is controlled by a human, false otherwise
+     */
+    public boolean isHuman()
+    {
+        return this.human;
+    }
+    
+    protected void setTurnLeft(final boolean turnLeft)
+    {
+        this.turnLeft = turnLeft;
+    }
+    
+    protected boolean isTurningLeft()
+    {
+        return this.turnLeft;
+    }
+    
+    protected void setTurnRight(final boolean turnRight)
+    {
+        this.turnRight = turnRight;
+    }
+    
+    protected boolean isTurningRight()
+    {
+        return this.turnRight;
+    }
+    
+    protected void turnLeft()
+    {
+        if (count++ == turnCount)
+        {
+            turn(-Math.toRadians(TURN_INTERVAL));
+            count = 0;
+        }
+    }
+    
+    protected void turnRight()
+    {
+        if (count++ == turnCount)
+        {
+            turn(Math.toRadians(TURN_INTERVAL));
+            count = 0;
+        }
+    }
+    
+    protected void setAttack(final boolean attack)
+    {
+        this.attack = attack;
+    }
+    
+    protected boolean isAttacking()
+    {
+        return this.attack;
+    }
+    
+    protected void setCarColor(final Color carColor)
+    {
+        this.carColor = carColor;
+    }
+    
+    private Color getCarColor()
+    {
+        return this.carColor;
     }
     
     protected final void addAnimation(final Direction direction, final int col, final int row)
@@ -176,29 +252,38 @@ public class Car extends Sprite implements Disposable, IElement
         this.angle = angle;
     }
     
-    private boolean hasAccelerate()
+    protected boolean hasAccelerate()
     {
         return this.accelerate;
     }
     
-    private void setAccelerate(final boolean accelerate)
+    protected void setAccelerate(final boolean accelerate)
     {
         this.accelerate = accelerate;
     }
+    
+    protected double getMaximumSpeed()
+    {
+        return this.maximumSpeed;
+    }
 
-    private double getSpeed()
+    private void setMaximumSpeed(final double maximumSpeed)
+    {
+        this.maximumSpeed = maximumSpeed;
+    }
+    
+    protected double getSpeed()
     {
         return this.speed;
     }
     
-    private void setSpeed(final double speed)
+    protected void setSpeed(final double speed)
     {
         this.speed = speed;
     }
     
     /**
-     * Determine the direction based on the existing <br>
-     * velocity, facing angle and speed of car.
+     * Determine the direction based on the existing velocity, facing angle and speed of car.
      */
     private void calculateVelocity()
     {
@@ -209,6 +294,11 @@ public class Car extends Sprite implements Disposable, IElement
             setVelocityX(getVelocityX() + (getSpeed() * Math.cos(getAngle())));
             setVelocityY(getVelocityY() + (getSpeed() * Math.sin(getAngle())));
         }
+        else
+        {
+            //if not accelerating slow down speed
+            setSpeed(getSpeed() * SPEED_DECELERATE);
+        }
     }
     
     /**
@@ -217,36 +307,12 @@ public class Car extends Sprite implements Disposable, IElement
     private void applyGravity()
     {
         //slow down speed
-        setVelocityX(getVelocityX() * SPEED_DECELERATE);
-        setVelocityY(getVelocityY() * SPEED_DECELERATE);
+        setVelocityX(getVelocityX() * VELOCITY_DECELERATE);
+        setVelocityY(getVelocityY() * VELOCITY_DECELERATE);
         
         //also slow down speed on mini-map
-        this.mapVelocityX = (mapVelocityX * SPEED_DECELERATE);
-        this.mapVelocityY = (mapVelocityY * SPEED_DECELERATE);
-    }
-    
-    /**
-     * Is the (x, y) point inside the polygon
-     * @param x x-point
-     * @param y y-point
-     * @return true if the point is inside the polygon, false otherwise
-     */
-    public boolean contains(final int x, final int y)
-    {
-        //is the point inside
-        boolean inside = false;
-        
-        for ( int i = 0, j = frame.xpoints.length - 1 ; i < frame.xpoints.length ; j = i++ )
-        {
-            if ((frame.ypoints[i] > y) != (frame.ypoints[j] > y) &&
-                 x < (frame.xpoints[j] - frame.xpoints[i]) * (y - frame.ypoints[i]) / (frame.ypoints[j] - frame.ypoints[i]) + frame.xpoints[i])
-            {
-                //odd is inside, even is out
-                inside = !inside;
-            }
-        }
-
-        return inside;
+        this.mapVelocityX = (mapVelocityX * VELOCITY_DECELERATE);
+        this.mapVelocityY = (mapVelocityY * VELOCITY_DECELERATE);
     }
     
     @Override
@@ -257,28 +323,6 @@ public class Car extends Sprite implements Disposable, IElement
         //store the center location
         this.centerX = getX();
         this.centerY = getY();
-        
-        updatePolygon();
-    }
-    
-    /**
-     * Calculate every point in the polygon based on the angle facing
-     */
-    public void updatePolygon()
-    {
-        //calculate every point in the polygon
-        for (int i=0; i < frame.xpoints.length; i++)
-        {
-            final int tmpX = XPOINTS[i];
-            final int tmpY = YPOINTS[i];
-
-            //take original (x,y) and determine new (x,y) based on the current angle
-            final double newX = (tmpX * Math.cos(getAngle())) - (tmpY * Math.sin(getAngle()));
-            final double newY = (tmpX * Math.sin(getAngle())) + (tmpY * Math.cos(getAngle()));
-
-            frame.xpoints[i] = (int)(getX() + newX);
-            frame.ypoints[i] = (int)(getY() + newY);
-        }
     }
     
     /**
@@ -456,11 +500,30 @@ public class Car extends Sprite implements Disposable, IElement
         this.setAngle(tmpAngle);
     }
     
-    @Override
-    public void update(final Engine engine) throws Exception
+    /**
+     * Set the maximum speed depending on where the car is on the track
+     * @param track The track the car is racing on
+     */
+    private void setMaximumSpeed(final Track track)
+    {
+        //set the maximum speed depending on where the car is
+        if (track.isRoad(getCol(), getRow()))
+        {
+            setMaximumSpeed(MAXIMUM_SPEED_ROAD);
+        }
+        else
+        {
+            setMaximumSpeed(MAXIMUM_SPEED_OFF_ROAD);
+        }
+    }
+    
+    protected void updateBasic(final Track track)
     {
         //update location on mini-map
         updateMiniMapLocation();
+        
+        //check maximum speed
+        setMaximumSpeed(track);
         
         //calculate velocity
         calculateVelocity();
@@ -468,91 +531,39 @@ public class Car extends Sprite implements Disposable, IElement
         //apply gravity
         applyGravity();
         
-        //update polygon coordinates
-        updatePolygon();
-        
-        final Keyboard keyboard = engine.getKeyboard();
-        
-        //can only do one or the other
-        if (keyboard.hasKeyPressed(KeyEvent.VK_RIGHT))
-        {
-            turnRight = true;
-            turnLeft = false;
-        }
-        else if (keyboard.hasKeyPressed(KeyEvent.VK_LEFT))
-        {
-            turnRight = false;
-            turnLeft = true;
-        }
-        
-        //are we just starting to accelerate
-        boolean start = (!hasAccelerate());
-        
-        if (keyboard.hasKeyPressed(KeyEvent.VK_A))
-        {
-            setAccelerate(true);
-        }
-        
-        if (keyboard.hasKeyPressed(KeyEvent.VK_S))
-            attack = true;
-        
-        if (keyboard.hasKeyReleased(KeyEvent.VK_RIGHT))
-        {
-            turnRight = false;
-            count = 0;
-            keyboard.removeKeyPressed(KeyEvent.VK_RIGHT);
-            keyboard.removeKeyReleased(KeyEvent.VK_RIGHT);
-        }
-        
-        if (keyboard.hasKeyReleased(KeyEvent.VK_LEFT))
-        {
-            turnLeft = false;
-            count = 0;
-            keyboard.removeKeyPressed(KeyEvent.VK_LEFT);
-            keyboard.removeKeyReleased(KeyEvent.VK_LEFT);
-        }
-        
-        if (keyboard.hasKeyReleased(KeyEvent.VK_A))
-            setAccelerate(false);
-        
-        if (keyboard.hasKeyReleased(KeyEvent.VK_S))
-            attack = false;
-        
-        if (turnRight)
-        {
-            if (count++ == turnCount)
-            {
-                turn(Math.toRadians(TURN_INTERVAL));
-                count = 0;
-            }
-        }
-        else if (turnLeft)
-        {
-            if (count++ == turnCount)
-            {
-                turn(-Math.toRadians(TURN_INTERVAL));
-                count = 0;
-            }
-        }
-        
+        //manage the speed of the car
+        manageSpeed();
+    }
+    
+    /**
+     * Manage the speed of the car.<br>
+     * If accelerating we will manage that to ensure it stays within the maximum limit
+     */
+    protected void manageSpeed()
+    {
         if (hasAccelerate())
         {
-            //if just starting, set starting speed
-            if (start)
-                setSpeed(STARTING_SPEED);
-            
+            //accelerate speed
             setSpeed(getSpeed() + ACCELERATE_SPEED);
             
-            if (getSpeed() > MAXIMUM_SPEED)
-                setSpeed(MAXIMUM_SPEED);
+            //make sure we don't go over the maximum speed
+            if (getSpeed() > getMaximumSpeed())
+                setSpeed(getMaximumSpeed());
         }
     }
+    
+    /**
+     * All cars will need logic to update
+     * @param engine Object containing all game elements
+     */
+    @Override
+    public abstract void update(final Engine engine) throws Exception;
     
     /**
      * Turn the car.
      * @param angle The angle in radians
      */
-    private void turn(final double angle)
+    protected void turn(final double angle)
     {
         //set the new angle
         setAngle(getAngle() + angle);
@@ -585,12 +596,12 @@ public class Car extends Sprite implements Disposable, IElement
         setY(tmpY);
     }
     
-    private void renderMapLocation(final Graphics graphics, final int startX, final int startY)
+    protected void renderMapLocation(final Graphics graphics, final int startX, final int startY)
     {
-        final int w = 1;
-        final int h = 1;
-        
-        graphics.setColor(Color.RED);
-        graphics.drawRect(startX + (int)(getCol() * w), startY + (int)(getRow() * h), w, h);
+        if (getCarColor() != null)
+        {
+            graphics.setColor(getCarColor());
+            graphics.drawRect(startX + (int)(getCol()), startY + (int)(getRow()), 1, 1);
+        }
     }
 }

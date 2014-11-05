@@ -4,13 +4,14 @@ import com.gamesbykevin.framework.input.Keyboard;
 import com.gamesbykevin.framework.menu.Menu;
 import com.gamesbykevin.framework.util.*;
 
-import com.gamesbykevin.rcproam.car.Car;
+import com.gamesbykevin.rcproam.car.Cars;
 import com.gamesbykevin.rcproam.engine.Engine;
 import com.gamesbykevin.rcproam.map.Maps;
 import com.gamesbykevin.rcproam.menu.CustomMenu;
 import com.gamesbykevin.rcproam.menu.CustomMenu.*;
 import com.gamesbykevin.rcproam.resources.*;
 import com.gamesbykevin.rcproam.shared.Shared;
+import java.awt.Color;
 
 import java.awt.Graphics;
 import java.awt.Image;
@@ -27,8 +28,8 @@ public final class Manager implements IManager
     //where gameplay occurs
     private Rectangle window;
     
-    //our race car
-    private Car car;
+    //the container for our race cars
+    private Cars cars;
     
     //the maps of the tracks
     private Maps maps;
@@ -43,6 +44,7 @@ public final class Manager implements IManager
         //determine if sound is enabled
         final boolean enabled = (Toggle.values()[engine.getMenu().getOptionSelectionIndex(LayerKey.OptionsInGame, OptionKey.Sound)] == Toggle.Off);
 
+        
         //set the audio depending on menu setting
         engine.getResources().setAudioEnabled(enabled);
         
@@ -60,22 +62,29 @@ public final class Manager implements IManager
     @Override
     public void reset(final Engine engine) throws Exception
     {
-        if (car == null)
+        if (this.cars == null)
         {
-            car = new Car();
-            car.setLocation(engine.getManager().getWindow());
-            car.setImage(engine.getResources().getGameImage(GameImages.Keys.Truck));
+            //create new container for cars
+            this.cars = new Cars();
+            
+            //add default human car
+            this.cars.add(getWindow(), engine.getResources().getGameImage(GameImages.Keys.Truck));
         }
         
-        if (maps == null)
+        if (this.maps == null)
         {
-            maps = new Maps(engine.getResources());
+            this.maps = new Maps(engine.getResources());
         }
     }
     
-    public Car getCar()
+    public Cars getCars()
     {
-        return this.car;
+        return this.cars;
+    }
+    
+    public Maps getMaps()
+    {
+        return this.maps;
     }
     
     @Override
@@ -99,6 +108,18 @@ public final class Manager implements IManager
         if (window != null)
             window = null;
         
+        if (cars != null)
+        {
+            cars.dispose();
+            cars = null;
+        }
+        
+        if (maps != null)
+        {
+            maps.dispose();
+            maps = null;
+        }
+        
         try
         {
             //recycle objects
@@ -120,9 +141,9 @@ public final class Manager implements IManager
     {
         if (!maps.isLoading())
         {
-            if (car != null)
+            if (cars != null)
             {
-                car.update(engine);
+                cars.update(engine);
             }
         }
         
@@ -132,9 +153,15 @@ public final class Manager implements IManager
             {
                 maps.update(engine);
                 
-                //if no longer loading, place car
+                //if no longer loading, place car(s)
                 if (!maps.isLoading())
-                    maps.placeCar(car);
+                {
+                    //assign the track based on the option selection
+                    maps.setIndex(engine.getMenu().getOptionSelectionIndex(CustomMenu.LayerKey.Options, CustomMenu.OptionKey.Track));
+                    
+                    //place the cars
+                    maps.placeCars(cars);
+                }
             }
             else
             {
@@ -152,19 +179,27 @@ public final class Manager implements IManager
     {
         if (maps != null)
         {
-            //draw the map
-            maps.render(graphics);
-            
-            //draw the mini-map
-            //maps.renderMiniMap(graphics, 0, 0);
-        }
-        
-        if (!maps.isLoading())
-        {
-            if (car != null)
+            if (maps.isLoading())
             {
-                //draw the race car
-                car.render(graphics);
+                //draw the map
+                maps.render(graphics);
+            }
+            else
+            {
+                //draw the map
+                maps.render(graphics);
+            
+                //draw the mini-map
+                maps.renderMiniMap(graphics, 0, 0);
+
+                if (cars != null)
+                {
+                    //draw where the cars are on the mini-map
+                    cars.renderMiniMapLocations(graphics, 0, 0);
+                    
+                    //draw the race car
+                    cars.render(graphics);
+                }
             }
         }
     }

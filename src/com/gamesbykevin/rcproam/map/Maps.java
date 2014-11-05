@@ -3,13 +3,14 @@ package com.gamesbykevin.rcproam.map;
 import com.gamesbykevin.framework.resources.Disposable;
 import com.gamesbykevin.framework.resources.Progress;
 
-import com.gamesbykevin.rcproam.car.Car;
+import com.gamesbykevin.rcproam.car.Cars;
 import com.gamesbykevin.rcproam.engine.Engine;
 import com.gamesbykevin.rcproam.resources.GameImages;
 import com.gamesbykevin.rcproam.resources.Resources;
 import com.gamesbykevin.rcproam.shared.IElement;
 
 import java.awt.Graphics;
+import java.awt.Image;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +18,7 @@ import java.util.List;
  * This class will be the container for all maps
  * @author GOD
  */
-public final class Maps implements IElement, Disposable
+public class Maps implements IElement, Disposable
 {
     //all of the tracks that will be in play
     private List<StaticMap> maps;
@@ -53,9 +54,9 @@ public final class Maps implements IElement, Disposable
      * Place the car at the starting position of the current map
      * @param car The car we want to place
      */
-    public void placeCar(final Car car)
+    public void placeCars(final Cars cars)
     {
-        getMap().placeCar(car);
+        getMap().placeCars(cars);
     }
     
     /**
@@ -73,10 +74,19 @@ public final class Maps implements IElement, Disposable
     /**
      * Assign the current map
      * @param index The index of the desired map, if out of bounds 0 will be assigned
+     * @throws exception if the maps have not finished loading or if no maps exist
      */
-    public void setIndex(final int index)
+    public void setIndex(final int index) throws Exception
     {
         this.index = index;
+        
+        //if we are still loading we will not be able to assign the current map yet
+        if (isLoading())
+            throw new Exception("Can assign the current map once the maps have finished loading.");
+        
+        //if there are no maps, something else went wrong here
+        if (maps.isEmpty())
+            throw new Exception("Maps have not been created yet unable to assign.");
         
         //prevent out of bounds exception
         if (getIndex() < 0 || getIndex() >= maps.size())
@@ -123,125 +133,230 @@ public final class Maps implements IElement, Disposable
         
         //assign the description if not yet set
         if (progress.getDescription() == null)
-            progress.setDescription("Loading Maps: ");
+            progress.setDescription("Analyzing/Creating Maps: ");
         
         //if we are not complete continue loading maps
         if (isLoading())
         {
-            //object representing a map
-            StaticMap staticMap;
+            //corret offset value to place car at start
+            final double offsetCol;
+            final double offsetRow;
+            
+            //where the race starts on the mini-map
+            final double startCol;
+            final double startRow;
+            
+            //image of the track
+            final Image image;
             
             switch (progress.getCount())
             {
                 case 0:
-                    staticMap = new StaticMap(28.5, 3, 48.25, 34.5, engine.getResources().getGameImage(GameImages.Keys.Track01));
+                    offsetCol = 28.5;
+                    offsetRow = 3;
+                    startCol = 48.25;
+                    startRow = 34.5;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track01);
                     break;
                     
                 case 1:
-                    staticMap = new StaticMap(31, 0.5, 48.75, 26, engine.getResources().getGameImage(GameImages.Keys.Track02));
+                    offsetCol = 31;
+                    offsetRow = 0.5;
+                    startCol = 48.75;
+                    startRow = 26;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track02);
                     break;
                     
                 case 2:
-                    staticMap = new StaticMap(29, 2.5, 48.75, 34, engine.getResources().getGameImage(GameImages.Keys.Track03));
+                    offsetCol = 29;
+                    offsetRow = 2.5;
+                    startCol = 48.75;
+                    startRow = 34;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track03);
                     break;
                     
                 case 3:
-                    staticMap = new StaticMap(31, 0.5, 48.75, 34, engine.getResources().getGameImage(GameImages.Keys.Track04));
+                    offsetCol = 31;
+                    offsetRow = 0.5;
+                    startCol = 48.75;
+                    startRow = 34;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track04);
                     break;
                     
                 case 4:
-                    staticMap = new StaticMap(33, 2.5, 40.75, 34, engine.getResources().getGameImage(GameImages.Keys.Track05));
+                    offsetCol = 33;
+                    offsetRow = 2.5;
+                    startCol = 40.75;
+                    startRow = 34;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track05);
                     break;
                     
                 case 5:
-                    staticMap = new StaticMap(31, 0.55, 48.75, 34, engine.getResources().getGameImage(GameImages.Keys.Track06));
+                    offsetCol = 31;
+                    offsetRow = 0.55;
+                    startCol = 48.75;
+                    startRow = 34;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track06);
                     break;
                     
                 case 6:
-                    staticMap = new StaticMap(18, -3.25, 39.75, 26.25, engine.getResources().getGameImage(GameImages.Keys.Track07));
+                    offsetCol = 18;
+                    offsetRow = -3.25;
+                    startCol = 39.75;
+                    startRow = 26.25;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track07);
                     break;
                     
                 case 7:
-                    staticMap = new StaticMap(14, 0.75, 23.75, 34.25, engine.getResources().getGameImage(GameImages.Keys.Track08));
+                    offsetCol = 14;
+                    offsetRow = 0.75;
+                    startCol = 23.75;
+                    startRow = 34.25;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track08);
                     break;
                     
                 case 8:
-                    staticMap = new StaticMap(28, 2.75, 47.75, 34, engine.getResources().getGameImage(GameImages.Keys.Track09));
+                    offsetCol = 28;
+                    offsetRow = 2.75;
+                    startCol = 47.75;
+                    startRow = 34;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track09);
                     break;
                     
                 case 9:
-                    staticMap = new StaticMap(30, 1.05, 47.75, 26.5, engine.getResources().getGameImage(GameImages.Keys.Track10));
+                    offsetCol = 30;
+                    offsetRow = 1.05;
+                    startCol = 47.75;
+                    startRow = 26.5;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track10);
                     break;
                     
                 case 10:
-                    staticMap = new StaticMap(30, 1.05, 47.75, 26.5, engine.getResources().getGameImage(GameImages.Keys.Track11));
+                    offsetCol = 30;
+                    offsetRow = 1.05;
+                    startCol = 47.75;
+                    startRow = 26.5;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track11);
                     break;
                     
                 case 11:
-                    staticMap = new StaticMap(31, 1.05, 48.75, 34.5, engine.getResources().getGameImage(GameImages.Keys.Track12));
+                    offsetCol = 31;
+                    offsetRow = 1.05;
+                    startCol = 48.75;
+                    startRow = 34.5;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track12);
                     break;
                     
                 case 12:
-                    staticMap = new StaticMap(19, -3.25, 40.75, 26.15, engine.getResources().getGameImage(GameImages.Keys.Track13));
+                    offsetCol = 19;
+                    offsetRow = -3.25;
+                    startCol = 40.75;
+                    startRow = 26.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track13);
                     break;
                     
                 case 13:
-                    staticMap = new StaticMap(18, -4, 39.75, 25.5, engine.getResources().getGameImage(GameImages.Keys.Track14));
+                    offsetCol = 18;
+                    offsetRow = -4;
+                    startCol = 39.75;
+                    startRow = 25.5;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track14);
                     break;
                     
                 case 14:
-                    staticMap = new StaticMap(33, 2.75, 40.75, 34.15, engine.getResources().getGameImage(GameImages.Keys.Track15));
+                    offsetCol = 33;
+                    offsetRow = 2.75;
+                    startCol = 40.75;
+                    startRow = 34.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track15);
                     break;
                     
                 case 15:
-                    staticMap = new StaticMap(15, 0.75, 24.75, 34.15, engine.getResources().getGameImage(GameImages.Keys.Track16));
+                    offsetCol = 15;
+                    offsetRow = 0.75;
+                    startCol = 24.75;
+                    startRow = 34.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track16);
                     break;
                     
                 case 16:
-                    staticMap = new StaticMap(30, 0.75, 47.75, 34.15, engine.getResources().getGameImage(GameImages.Keys.Track17));
+                    offsetCol = 30;
+                    offsetRow = 0.75;
+                    startCol = 47.75;
+                    startRow = 34.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track17);
                     break;
                     
                 case 17:
-                    staticMap = new StaticMap(32, 2.75, 39.75, 34.15, engine.getResources().getGameImage(GameImages.Keys.Track18));
+                    offsetCol = 32;
+                    offsetRow = 2.75;
+                    startCol = 39.75;
+                    startRow = 34.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track18);
                     break;
                     
                 case 18:
-                    staticMap = new StaticMap(18, -3.25, 39.75, 26.15, engine.getResources().getGameImage(GameImages.Keys.Track19));
+                    offsetCol = 18;
+                    offsetRow = -3.25;
+                    startCol = 39.75;
+                    startRow = 26.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track19);
                     break;
                     
                 case 19:
-                    staticMap = new StaticMap(29, 2.75, 48.75, 34.15, engine.getResources().getGameImage(GameImages.Keys.Track20));
+                    offsetCol = 29;
+                    offsetRow = 2.75;
+                    startCol = 48.75;
+                    startRow = 34.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track20);
                     break;
                     
                 case 20:
-                    staticMap = new StaticMap(32, 2.75, 39.75, 34.15, engine.getResources().getGameImage(GameImages.Keys.Track21));
+                    offsetCol = 32;
+                    offsetRow = 2.75;
+                    startCol = 39.75;
+                    startRow = 34.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track21);
                     break;
                     
                 case 21:
-                    staticMap = new StaticMap(30, 0.75, 47.75, 34.15, engine.getResources().getGameImage(GameImages.Keys.Track22));
+                    offsetCol = 30;
+                    offsetRow = 0.75;
+                    startCol = 47.75;
+                    startRow = 34.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track22);
                     break;
                     
                 case 22:
-                    staticMap = new StaticMap(28, 2.75, 47.75, 34.15, engine.getResources().getGameImage(GameImages.Keys.Track23));
+                    offsetCol = 28;
+                    offsetRow = 2.75;
+                    startCol = 47.75;
+                    startRow = 34.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track23);
                     break;
                     
                 case 23:
-                    staticMap = new StaticMap(14, 0.75, 55.75, 34.15, engine.getResources().getGameImage(GameImages.Keys.Track24));
+                    offsetCol = 14;
+                    offsetRow = 0.75;
+                    startCol = 55.75;
+                    startRow = 34.15;
+                    image = engine.getResources().getGameImage(GameImages.Keys.Track24);
                     break;
                     
                 default:
                     throw new Exception("staticMap is not setup: " + progress.getCount());
             }
-                    
+            
             //add map to list
-            maps.add(staticMap);
+            maps.add(new StaticMap(offsetCol, offsetRow, startCol, startRow, image));
             
             //increase the progress
             progress.increase();
         }
         else
         {
-            getMap().updateLocation(engine.getManager().getCar(), engine.getManager().getWindow());
+            //update the map location based on the human location
+            getMap().updateLocation(engine.getManager().getCars().getHuman(), engine.getManager().getWindow());
         }
     }
     

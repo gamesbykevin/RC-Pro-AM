@@ -319,8 +319,8 @@ public final class StaticMap extends Sprite implements Disposable
         track.setVisited(col, row, true);
 
         //display for debugging purposes
-        if (Shared.DEBUG)
-            System.out.println("Column " + col + ", Row = " + row + " - Cost " + cost);
+        //if (Shared.DEBUG)
+        //    System.out.println("Column " + col + ", Row = " + row + " - Cost " + cost);
 
         //return true
         return true;

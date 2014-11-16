@@ -18,8 +18,6 @@ public final class Human extends Car
         //update basic elements for car: gravity, speed, etc...
         super.updateBasic(engine.getManager().getMaps().getMap().getTrack());
         
-        
-        
         //get keyboard input object
         final Keyboard keyboard = engine.getKeyboard();
         
@@ -60,15 +58,5 @@ public final class Human extends Car
         
         if (keyboard.hasKeyReleased(KeyEvent.VK_S))
             setAttack(false);
-        
-        if (isTurningRight())
-        {
-            turnRight();
-        }
-        else if (isTurningLeft())
-        {
-            turnLeft();
-        }
-        
     }
 }

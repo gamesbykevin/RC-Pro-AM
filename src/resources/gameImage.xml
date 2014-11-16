@@ -12,20 +12,4 @@
     <image id="Track06">resources/images/game/maps/RCProAmMapLevel06BG.png</image>
     <image id="Track07">resources/images/game/maps/RCProAmMapLevel07BG.png</image>
     <image id="Track08">resources/images/game/maps/RCProAmMapLevel08BG.png</image>
-    <image id="Track09">resources/images/game/maps/RCProAmMapLevel09BG.png</image>
-    <image id="Track10">resources/images/game/maps/RCProAmMapLevel10BG.png</image>
-    <image id="Track11">resources/images/game/maps/RCProAmMapLevel11BG.png</image>
-    <image id="Track12">resources/images/game/maps/RCProAmMapLevel12BG.png</image>
-    <image id="Track13">resources/images/game/maps/RCProAmMapLevel13BG.png</image>
-    <image id="Track14">resources/images/game/maps/RCProAmMapLevel14BG.png</image>
-    <image id="Track15">resources/images/game/maps/RCProAmMapLevel15BG.png</image>
-    <image id="Track16">resources/images/game/maps/RCProAmMapLevel16BG.png</image>
-    <image id="Track17">resources/images/game/maps/RCProAmMapLevel17BG.png</image>
-    <image id="Track18">resources/images/game/maps/RCProAmMapLevel18BG.png</image>
-    <image id="Track19">resources/images/game/maps/RCProAmMapLevel19BG.png</image>
-    <image id="Track20">resources/images/game/maps/RCProAmMapLevel20BG.png</image>
-    <image id="Track21">resources/images/game/maps/RCProAmMapLevel21BG.png</image>
-    <image id="Track22">resources/images/game/maps/RCProAmMapLevel22BG.png</image>
-    <image id="Track23">resources/images/game/maps/RCProAmMapLevel23BG.png</image>
-    <image id="Track24">resources/images/game/maps/RCProAmMapLevel24BG.png</image>
 </images>

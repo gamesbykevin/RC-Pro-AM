@@ -180,7 +180,7 @@ public final class Track implements Disposable
      * @param cell Location
      * @return cost The distance from the specified location back to the starting point
      */
-    protected int getCost(final Cell cell)
+    public int getCost(final Cell cell)
     {
         return getCost((int)cell.getCol(), (int)cell.getRow());
     }
@@ -191,7 +191,18 @@ public final class Track implements Disposable
      * @param row
      * @return cost The distance from the specified location back to the starting point
      */
-    protected int getCost(final int column, final int row)
+    public int getCost(final double column, final double row)
+    {
+        return getCost((int)column, (int)row);
+    }
+    
+    /**
+     * Get the cost of a tile
+     * @param column
+     * @param row
+     * @return cost The distance from the specified location back to the starting point
+     */
+    public int getCost(final int column, final int row)
     {
         return key[row][column].getCost();
     }

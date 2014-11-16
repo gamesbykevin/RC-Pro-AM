@@ -57,7 +57,7 @@ public class Cars implements Disposable, IElement
         {
             try
             {
-                Human car = new Human();
+                Cpu car = new Cpu();
                 car.setCarColor(Color.RED);
                 car.setLocation(window);
                 car.setImage(image);
@@ -78,6 +78,9 @@ public class Cars implements Disposable, IElement
      */
     public Car getHuman()
     {
+        if (1==1)
+            return cars.get(0);
+        
         for (int i = 0; i < cars.size(); i++)
         {
             //if this car is controlled by human we found our car
@@ -93,7 +96,7 @@ public class Cars implements Disposable, IElement
      * Add car to list
      * @param car The car we want to add
      */
-    public void add(final Car car)
+    private void add(final Car car)
     {
         cars.add(car);
     }

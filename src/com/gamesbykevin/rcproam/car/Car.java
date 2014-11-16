@@ -13,7 +13,6 @@ import java.awt.Color;
 
 import java.awt.Graphics;
 import java.awt.Rectangle;
-import java.awt.event.KeyEvent;
 
 public abstract class Car extends Sprite implements Disposable, IElement
 {
@@ -238,7 +237,11 @@ public abstract class Car extends Sprite implements Disposable, IElement
         super.dispose();
     }
     
-    private double getAngle()
+    /**
+     * Get the angle the car is facing
+     * @return Angle in Radians
+     */
+    protected double getAngle()
     {
         return this.angle;
     }
@@ -338,15 +341,21 @@ public abstract class Car extends Sprite implements Disposable, IElement
     }
     
     /**
+     * Get the current facing angle
+     * @return The facing angle in degrees rounded to the nearest degree.
+     */
+    protected double getFacingAngle()
+    {
+        return Math.round(Math.toDegrees(getAngle()));
+    }
+    
+    /**
      * Assign the appropriate animation based on the angle
      */
     private void correctAnimation()
     {
-        //convert to degrees
-        final double facingAngle = Math.toDegrees(getAngle());
-        
         //round to nearest degree
-        final double degrees = Math.round(facingAngle);
+        final double degrees = getFacingAngle();
         
         try
         {
@@ -533,6 +542,16 @@ public abstract class Car extends Sprite implements Disposable, IElement
         
         //manage the speed of the car
         manageSpeed();
+        
+        //manage direction turning
+        if (isTurningRight())
+        {
+            turnRight();
+        }
+        else if (isTurningLeft())
+        {
+            turnLeft();
+        }
     }
     
     /**
@@ -578,8 +597,6 @@ public abstract class Car extends Sprite implements Disposable, IElement
     @Override
     public void render(final Graphics graphics)
     {
-        //renderMapLocation(graphics);
-        
         //store original location
         double tmpX = getX();
         double tmpY = getY();

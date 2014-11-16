@@ -189,13 +189,17 @@ public final class Manager implements IManager
                 //draw the map
                 maps.render(graphics);
             
+                //where the mini-map will be drawn
+                final int x = 0;
+                final int y = 0;
+                
                 //draw the mini-map
-                maps.renderMiniMap(graphics, 0, 0);
+                maps.renderMiniMap(graphics, x, y);
 
                 if (cars != null)
                 {
                     //draw where the cars are on the mini-map
-                    cars.renderMiniMapLocations(graphics, 0, 0);
+                    cars.renderMiniMapLocations(graphics, x, y);
                     
                     //draw the race car
                     cars.render(graphics);

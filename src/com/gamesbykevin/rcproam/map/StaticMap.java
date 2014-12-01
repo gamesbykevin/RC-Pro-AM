@@ -47,9 +47,9 @@ public final class StaticMap extends Sprite implements Disposable
         
         //add the starting locations for this map
         this.startingLocations.add(new Cell(startCol,       startRow));
-        this.startingLocations.add(new Cell(startCol,       startRow + 1.5));
-        this.startingLocations.add(new Cell(startCol + 1.5, startRow));
-        this.startingLocations.add(new Cell(startCol + 1.5, startRow + 1.5));
+        this.startingLocations.add(new Cell(startCol - 1,       startRow - 1.5));
+        this.startingLocations.add(new Cell(startCol + 1, startRow - .25));
+        this.startingLocations.add(new Cell(startCol + 1, startRow - 1.5));
         
         //assign image
         this.assignImage(image);
@@ -341,22 +341,62 @@ public final class StaticMap extends Sprite implements Disposable
      * @param car The car that is in the center of the map
      * @param screen The window in which this will be displayed
      */
-    public void updateLocation(final Car car, final Rectangle screen)
+    protected void updateLocation(final Car car, final Rectangle screen)
+    {
+        //get offset coordinates based on car location
+        final double x = this.getAdjustedX(car, screen);
+        final double y = this.getAdjustedY(car, screen);
+        
+        //set location
+        this.setLocation(x, y);
+    }
+    
+    /**
+     * Get adjusted x-coordinate.<br>
+     * This will determine where the isometric coordinate is to be placed based on the car location
+     * @param car The car we want to calculate the coordinate
+     * @param screen Screen where game play takes place
+     * @return x-coordinate
+     */
+    public double getAdjustedX(final Car car, final Rectangle screen)
     {
         //get the car location
         double col = car.getCol();
         double row = car.getRow();
         
         //offset the (col, row) because the part of the map is missing from each image
-        col -= getOffsetCol();//28.5;
-        row -= getOffsetRow();//3;
+        col -= getOffsetCol();
+        row -= getOffsetRow();
         
         //calculate the location
         final double x = ((PIXEL_WIDTH_SMALL_MAP * ISOMETRIC_TILE_WIDTH) / 2) + (col * ISOMETRIC_TILE_WIDTH) - (row * ISOMETRIC_TILE_WIDTH);
+        
+        //position in middle of screen
+        return (-x + (screen.width / 2));
+    }
+            
+    /**
+     * Get adjusted y-coordinate.<br>
+     * This will determine where the isometric coordinate is to be placed based on the car location
+     * @param car The car we want to calculate the coordinate
+     * @param screen Screen where game play takes place
+     * @return y-coordinate
+     */
+    public double getAdjustedY(final Car car, final Rectangle screen)
+    {
+        //get the car location
+        double col = car.getCol();
+        double row = car.getRow();
+        
+        //offset the (col, row) because the part of the map is missing from each image
+        col -= getOffsetCol();
+        row -= getOffsetRow();
+        
+        //calculate the location
         final double y = (row * ISOMETRIC_TILE_HEIGHT) + (col * ISOMETRIC_TILE_HEIGHT);
         
-        //position in the middle of screen
-        this.setLocation(-x + (screen.width / 2), -y + (screen.height / 2));
+        //position in middle of screen
+        return (-y + (screen.height / 2));
     }
     
     @Override

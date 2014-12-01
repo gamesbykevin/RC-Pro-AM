@@ -3,7 +3,6 @@ package com.gamesbykevin.rcproam.car;
 import com.gamesbykevin.framework.base.Animation;
 import com.gamesbykevin.framework.base.Sprite;
 import com.gamesbykevin.framework.resources.Disposable;
-import com.gamesbykevin.framework.input.Keyboard;
 
 import com.gamesbykevin.rcproam.engine.Engine;
 import com.gamesbykevin.rcproam.map.Track;
@@ -45,20 +44,27 @@ public abstract class Car extends Sprite implements Disposable, IElement
     //speed at which we are moving
     private double speed = 0;
     
-    //the maximum speed the car can move
-    private double maximumSpeed = MAXIMUM_SPEED_ROAD;
+    //the current maximum speed allowed
+    private double maxSpeed = DEFAULT_MAXIMUM_SPEED_ROAD;
+    
+    //the maximum speed on and off the road
+    private double maxOffRoadSpeed = DEFAULT_MAXIMUM_SPEED_OFF_ROAD;
+    private double maxRoadSpeed = DEFAULT_MAXIMUM_SPEED_ROAD;
     
     //starting speed
     protected static final double STARTING_SPEED = 0.0025;
     
     //maximum speed allowed while driving on the road
-    private static final double MAXIMUM_SPEED_ROAD = 0.0275;
+    private static final double DEFAULT_MAXIMUM_SPEED_ROAD = 0.0125;
     
     //maximum speed allowed while driving off road
-    private static final double MAXIMUM_SPEED_OFF_ROAD = 0.00125;
+    private static final double DEFAULT_MAXIMUM_SPEED_OFF_ROAD = 0.00125;
     
     //the rate at which you accelerate to the maximum speed
-    protected static final double ACCELERATE_SPEED = 0.00005;
+    protected static final double DEFAULT_ACCELERATE_SPEED = 0.00005;
+    
+    //speed at which we will accelerate
+    private double accelerateRate = DEFAULT_ACCELERATE_SPEED;
     
     //velocity slow down rate
     private final double VELOCITY_DECELERATE = 0.9;
@@ -69,9 +75,6 @@ public abstract class Car extends Sprite implements Disposable, IElement
     //dimensions of car
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
-    
-    //store the center location
-    private double centerX, centerY;
     
     //the velocity of the car moving on the mini-map
     private double mapVelocityX = 0;
@@ -209,6 +212,16 @@ public abstract class Car extends Sprite implements Disposable, IElement
         return this.carColor;
     }
     
+    protected void setAccelerateRate(final double accelerateRate)
+    {
+        this.accelerateRate = accelerateRate;
+    }
+    
+    protected double getAccelerateRate()
+    {
+        return this.accelerateRate;
+    }
+    
     protected final void addAnimation(final Direction direction, final int col, final int row)
     {
         try
@@ -265,14 +278,41 @@ public abstract class Car extends Sprite implements Disposable, IElement
         this.accelerate = accelerate;
     }
     
-    protected double getMaximumSpeed()
+    protected double getMaxRoadSpeed()
     {
-        return this.maximumSpeed;
+        return this.maxRoadSpeed;
+    }
+    
+    /**
+     * Set the max speed allowed while driving on road
+     * @param maxRoadSpeed 
+     */
+    protected void setMaxRoadSpeed(final double maxRoadSpeed)
+    {
+        this.maxRoadSpeed = maxRoadSpeed;
+    }
+    
+    private double getMaxOffRoadSpeed()
+    {
+        return this.maxOffRoadSpeed;
+    }
+    
+    /**
+     * Get the current max speed allowed
+     * @return 
+     */
+    protected double getMaxSpeed()
+    {
+        return this.maxSpeed;
     }
 
-    private void setMaximumSpeed(final double maximumSpeed)
+    /**
+     * Set the current maximum speed
+     * @param maximumSpeed 
+     */
+    private void setMaxSpeed(final double maxSpeed)
     {
-        this.maximumSpeed = maximumSpeed;
+        this.maxSpeed = maxSpeed;
     }
     
     protected double getSpeed()
@@ -321,11 +361,12 @@ public abstract class Car extends Sprite implements Disposable, IElement
     @Override
     public void setLocation(final Rectangle screen)
     {
+        //set location in center of screen
         super.setLocation(screen);
         
-        //store the center location
-        this.centerX = getX();
-        this.centerY = getY();
+        //offset from center depending on object dimensions
+        super.setX(getX() - (getWidth() / 2));
+        super.setY(getY() - (getHeight() / 2));
     }
     
     /**
@@ -494,13 +535,13 @@ public abstract class Car extends Sprite implements Disposable, IElement
         //calculate velocity
         calculateVelocity();
         
-        //get the new calculated velocity
+        //assign the new calculated map velocity
         this.mapVelocityX = this.getVelocityX();
         this.mapVelocityY = this.getVelocityY();
         
         //update location on mini-map
-        super.setCol(getCol() + (getVelocityX() * .5));
-        super.setRow(getRow() + (getVelocityY() * .5));
+        super.setCol(getCol() + mapVelocityX);
+        super.setRow(getRow() + mapVelocityY);
         
         //restore the velocity
         this.setVelocity(vx, vy);
@@ -513,26 +554,33 @@ public abstract class Car extends Sprite implements Disposable, IElement
      * Set the maximum speed depending on where the car is on the track
      * @param track The track the car is racing on
      */
-    private void setMaximumSpeed(final Track track)
+    private void setMaxSpeed(final Track track)
     {
         //set the maximum speed depending on where the car is
         if (track.isRoad(getCol(), getRow()))
         {
-            setMaximumSpeed(MAXIMUM_SPEED_ROAD);
+            setMaxSpeed(getMaxRoadSpeed());
         }
         else
         {
-            setMaximumSpeed(MAXIMUM_SPEED_OFF_ROAD);
+            setMaxSpeed(getMaxOffRoadSpeed());
         }
     }
     
-    protected void updateBasic(final Track track)
+    /**
+     * Update basic elements of the car.<br>
+     * 1. Mini-map location<br>
+     * 2. Maximum Speed depending on mini-map location<br>
+     * 3. Basic turning functions<br>
+     * @param track The current track in play
+     */
+    protected void updateBasicElements(final Track track)
     {
         //update location on mini-map
         updateMiniMapLocation();
         
-        //check maximum speed
-        setMaximumSpeed(track);
+        //set maximum speed based on car location
+        setMaxSpeed(track);
         
         //calculate velocity
         calculateVelocity();
@@ -563,11 +611,11 @@ public abstract class Car extends Sprite implements Disposable, IElement
         if (hasAccelerate())
         {
             //accelerate speed
-            setSpeed(getSpeed() + ACCELERATE_SPEED);
+            setSpeed(getSpeed() + getAccelerateRate());
             
-            //make sure we don't go over the maximum speed
-            if (getSpeed() > getMaximumSpeed())
-                setSpeed(getMaximumSpeed());
+            //make sure we don't go over the maximum speed, only when accelerating
+            if (getSpeed() > getMaxSpeed())
+                setSpeed(getMaxSpeed());
         }
     }
     
@@ -597,20 +645,8 @@ public abstract class Car extends Sprite implements Disposable, IElement
     @Override
     public void render(final Graphics graphics)
     {
-        //store original location
-        double tmpX = getX();
-        double tmpY = getY();
-        
-        //offset location
-        setX(centerX - (getWidth()  / 2));
-        setY(centerY - (getHeight() / 2));
-        
         //draw animation
         super.draw(graphics);
-        
-        //restore original location
-        setX(tmpX);
-        setY(tmpY);
     }
     
     protected void renderMapLocation(final Graphics graphics, final int startX, final int startY)

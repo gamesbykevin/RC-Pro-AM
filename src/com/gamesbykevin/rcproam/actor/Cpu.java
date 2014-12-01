@@ -20,12 +20,30 @@ public final class Cpu extends Car
     private static final double ANGLE_EAST = 225;
     private static final double ANGLE_SOUTH = 315;
     
-    //no matter the direction the road is always 4 pixles wide
+    //no matter the direction the road is always 4 cells wide
     private static final int ROAD_DIMENSIONS = 4;
+    
+    //how many cells do we check ahead check if a turn is required
+    private static final int VIEW_AHEAD = ROAD_DIMENSIONS - 1;
+    
+    //maximum speed allowed while driving on the road
+    private static final double DEFAULT_MAXIMUM_SPEED_ROAD = 0.025;
+    
+    //the max speed allowed while turning
+    private static final double TURN_SPEED = (DEFAULT_MAXIMUM_SPEED_ROAD * .35);
+    
+    //default error message
+    private static final String ERROR_MESSAGE = "Direction not setup here";
     
     public Cpu() throws Exception
     {
         super(false);
+        
+        //cpu accelerate speed will be faster
+        super.setAccelerateRate(Car.DEFAULT_ACCELERATE_SPEED * 2);
+        
+        //set max driving speed
+        super.setMaxRoadSpeed(DEFAULT_MAXIMUM_SPEED_ROAD * 2);
     }
     
     /**
@@ -46,7 +64,7 @@ public final class Cpu extends Car
     public void update(final Engine engine) throws Exception
     {
         //update basic elements for car: gravity, speed, etc...
-        super.updateBasic(engine.getManager().getMaps().getMap().getTrack());
+        updateBasicElements(engine.getManager().getMaps().getMap().getTrack());
         
         //always accelerate, for now
         super.setAccelerate(true);
@@ -57,107 +75,8 @@ public final class Cpu extends Car
         //make sure we aren't turning
         if (getFacingAngle() == getDestination())
         {
-            //did we change direction
-            boolean flag = false;
-            
-            //check if we are getting close to the edge
-            for (int i = 1; i <= ROAD_DIMENSIONS; i++)
-            {
-                switch (getDirection())
-                {
-                    case West:
-                        //if this is not part of road
-                        if (!track.isRoad(getCol() - i, getRow()))
-                        {
-                            //choose the location with the higher cost
-                            if (track.getCost(getCol() - i, getRow() - ROAD_DIMENSIONS) > track.getCost(getCol() - i, getRow() + ROAD_DIMENSIONS))
-                            {
-                                setDirection(Direction.North);
-                            }
-                            else
-                            {
-                                setDirection(Direction.South);
-                            }
-                            
-                            //flag change
-                            flag = true;
-                            
-                            //determine if either need to go north or south
-                            //setDirection(track.isRoad(getCol() - i, getRow() - ROAD_DIMENSIONS) ? Direction.North : Direction.South);
-                        }
-                        break;
-                        
-                    case East:
-                        //if this is not part of road
-                        if (!track.isRoad(getCol() + i, getRow()))
-                        {
-                            //choose the location with the higher cost
-                            if (track.getCost(getCol() + i, getRow() - ROAD_DIMENSIONS) > track.getCost(getCol() + i, getRow() + ROAD_DIMENSIONS))
-                            {
-                                setDirection(Direction.North);
-                            }
-                            else
-                            {
-                                setDirection(Direction.South);
-                            }
-                            
-                            //flag change
-                            flag = true;
-                            
-                            //determine if either need to go north or south
-                            //setDirection(track.isRoad(getCol() + i, getRow() - ROAD_DIMENSIONS) ? Direction.North : Direction.South);
-                        }
-                        break;
-
-                    case North:
-                        //if this is not part of road
-                        if (!track.isRoad(getCol(), getRow() - i))
-                        {
-                            //choose the location with the higher cost
-                            if (track.getCost(getCol() - ROAD_DIMENSIONS, getRow() - i) > track.getCost(getCol() + ROAD_DIMENSIONS, getRow() - i))
-                            {
-                                setDirection(Direction.West);
-                            }
-                            else
-                            {
-                                setDirection(Direction.East);
-                            }
-                            
-                            //flag change
-                            flag = true;
-                            
-                            //determine if either need to go east or west
-                            //setDirection(track.isRoad(getCol() - ROAD_DIMENSIONS, getRow() - i) ? Direction.West : Direction.East);
-                        }
-                        break;
-
-                    case South:
-                        //if this is not part of road
-                        if (!track.isRoad(getCol(), getRow() + i))
-                        {
-                            //choose the location with the higher cost
-                            if (track.getCost(getCol() - ROAD_DIMENSIONS, getRow() + i) > track.getCost(getCol() + ROAD_DIMENSIONS, getRow() + i))
-                            {
-                                setDirection(Direction.West);
-                            }
-                            else
-                            {
-                                setDirection(Direction.East);
-                            }
-                            
-                            //flag change
-                            flag = true;
-                            
-                            //determine if either need to go east or west
-                            //setDirection(track.isRoad(getCol() - ROAD_DIMENSIONS, getRow() + i) ? Direction.West : Direction.East);
-                        }
-                        break;
-                }
-                
-                //if change, exit loop
-                if (flag)
-                    break;
-            }
+            //check if we are coming to a turn
+            checkCorner(track);
         }
         
         //get the facing angle in degrees
@@ -169,6 +88,9 @@ public final class Cpu extends Car
         //determine if we are facing the correct angle
         if (degrees != destination)
         {
+            //set max speed while we are turning
+            setMaxRoadSpeed(TURN_SPEED);
+            
             //now determine the most efficient way to turn
             if (degrees > destination)
             {
@@ -202,6 +124,84 @@ public final class Cpu extends Car
             //if facing destination, no need to turn
             setTurnRight(false);
             setTurnLeft(false);
+            
+            //set max speed
+            setMaxRoadSpeed(DEFAULT_MAXIMUM_SPEED_ROAD);
+        }
+    }
+    
+    /**
+     * Look ahead in the direction we are going to determine if a turn is coming up.
+     * @param track The current track we are racing on
+     */
+    private void checkCorner(final Track track)
+    {
+        //check if we are getting close to the edge
+        switch (getDirection())
+        {
+            case West:
+                //if this is not part of road
+                if (!track.isRoad(getCol() - VIEW_AHEAD, getRow()))
+                {
+                    final double north = track.getCost(getCol() - VIEW_AHEAD, getRow() - ROAD_DIMENSIONS);
+                    final double south = track.getCost(getCol() - VIEW_AHEAD, getRow() + ROAD_DIMENSIONS);
+                    final double east = track.getCost(getCol() + VIEW_AHEAD, getRow());
+                    
+                    //choose the location with the higher cost
+                    setDirection((north > south) ? Direction.North : Direction.South);
+                    
+                    if (east > north && east > south)
+                        setDirection(Direction.East);
+                }
+                break;
+
+            case East:
+                //if this is not part of road
+                if (!track.isRoad(getCol() + VIEW_AHEAD, getRow()))
+                {
+                    final double north = track.getCost(getCol() + VIEW_AHEAD, getRow() - ROAD_DIMENSIONS);
+                    final double south = track.getCost(getCol() + VIEW_AHEAD, getRow() + ROAD_DIMENSIONS);
+                    final double west = track.getCost(getCol() - VIEW_AHEAD, getRow());
+                    
+                    //choose the location with the higher cost
+                    setDirection((north > south) ? Direction.North : Direction.South);
+                    
+                    if (west > north && west > south)
+                        setDirection(Direction.West);
+                }
+                break;
+
+            case North:
+                //if this is not part of road
+                if (!track.isRoad(getCol(), getRow() - VIEW_AHEAD))
+                {
+                    final double west = track.getCost(getCol() - ROAD_DIMENSIONS, getRow() - VIEW_AHEAD);
+                    final double east = track.getCost(getCol() + ROAD_DIMENSIONS, getRow() - VIEW_AHEAD);
+                    final double south = track.getCost(getCol(), getRow() + VIEW_AHEAD);
+                    
+                    //choose the location with the higher cost
+                    setDirection((west > east) ? Direction.West : Direction.East);
+                    
+                    if (south > west && south > east)
+                        setDirection(Direction.South);
+                }
+                break;
+
+            case South:
+                //if this is not part of road
+                if (!track.isRoad(getCol(), getRow() + VIEW_AHEAD))
+                {
+                    final double west = track.getCost(getCol() - ROAD_DIMENSIONS, getRow() + VIEW_AHEAD);
+                    final double east = track.getCost(getCol() + ROAD_DIMENSIONS, getRow() + VIEW_AHEAD);
+                    final double north = track.getCost(getCol(), getRow() - VIEW_AHEAD);
+                    
+                    //choose the location with the higher cost
+                    setDirection((west > east) ? Direction.West : Direction.East);
+                    
+                    if (north > west && north > east)
+                        setDirection(Direction.North);
+                }
+                break;
         }
     }
     
@@ -235,7 +235,7 @@ public final class Cpu extends Car
                 break;
                 
             default:
-                throw new Exception("Direction not setup here");
+                throw new Exception(ERROR_MESSAGE);
         }
         
         return destination;

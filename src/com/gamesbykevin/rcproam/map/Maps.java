@@ -63,9 +63,13 @@ public class Maps implements IElement, Disposable
     /**
      * Place the car at the starting position of the current map
      * @param car The car we want to place
+     * @throws Exception if there are no cars to place
      */
-    public void placeCars(final Cars cars)
+    public void placeCars(final Cars cars) throws Exception
     {
+        if (cars.getSize() < 1)
+            throw new Exception("There are no cars to place");
+        
         getMap().placeCars(cars);
     }
     

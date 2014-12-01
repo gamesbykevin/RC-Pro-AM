@@ -59,6 +59,7 @@
             <option>6</option>
             <option>7</option>
             <option>8</option>
+            <!--
             <option>9</option>
             <option>10</option>
             <option>11</option>
@@ -75,6 +76,7 @@
             <option>22</option>
             <option>23</option>
             <option>24</option>
+            -->
         </options>
         <options name="Full Screen: " id="FullScreen">
             <option>Off</option>

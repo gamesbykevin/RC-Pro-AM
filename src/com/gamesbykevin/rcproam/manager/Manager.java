@@ -67,8 +67,13 @@ public final class Manager implements IManager
             //create new container for cars
             this.cars = new Cars();
             
-            //add default human car
-            this.cars.add(getWindow(), engine.getResources().getGameImage(GameImages.Keys.Truck));
+            //add human car first
+            this.cars.add(getWindow(), engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED, false);
+            
+            //add cpu car(s)
+            this.cars.add(getWindow(), engine.getResources().getGameImage(GameImages.Keys.TruckBlue), Color.BLUE, false);
+            this.cars.add(getWindow(), engine.getResources().getGameImage(GameImages.Keys.TruckGreen), Color.GREEN, false);
+            this.cars.add(getWindow(), engine.getResources().getGameImage(GameImages.Keys.TruckOrange), Color.ORANGE, false);
         }
         
         if (this.maps == null)
@@ -139,14 +144,6 @@ public final class Manager implements IManager
     @Override
     public void update(final Engine engine) throws Exception
     {
-        if (!maps.isLoading())
-        {
-            if (cars != null)
-            {
-                cars.update(engine);
-            }
-        }
-        
         if (maps != null)
         {
             if (maps.isLoading())
@@ -165,7 +162,12 @@ public final class Manager implements IManager
             }
             else
             {
+                //update map first
                 maps.update(engine);
+                
+                //now update the cars
+                if (cars != null)
+                    cars.update(engine);
             }
         }
     }

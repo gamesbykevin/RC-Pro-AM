@@ -2,8 +2,10 @@ package com.gamesbykevin.rcproam.car;
 
 import com.gamesbykevin.framework.resources.Disposable;
 
+import com.gamesbykevin.rcproam.resources.GameImages;
 import com.gamesbykevin.rcproam.actor.*;
 import com.gamesbykevin.rcproam.engine.Engine;
+import com.gamesbykevin.rcproam.map.StaticMap;
 import com.gamesbykevin.rcproam.shared.IElement;
 
 import java.awt.Color;
@@ -47,28 +49,43 @@ public class Cars implements Disposable, IElement
     }
     
     /**
-     * Add default car to list that will be controlled by human
+     * Add car to list.<br>
+     * The first car added will be the human, all others will be cpu
      * @param window The area where the game will be played
      * @param image The sprite sheet for the car
+     * @param color The color of the car
+     * @param human Is the car human true or false
      */
-    public void add(final Rectangle window, final Image image)
+    public void add(final Rectangle window, final Image image, final Color color, final boolean human)
     {
-        if (cars.isEmpty())
+        try
         {
-            try
+            Car car;
+            
+            if (human)
             {
-                Cpu car = new Cpu();
-                car.setCarColor(Color.RED);
-                car.setLocation(window);
-                car.setImage(image);
+                car = new Human();
+            }
+            else
+            {
+                car = new Cpu();
+            }
+            
+            //assign car color 
+            car.setCarColor(color);
 
-                //add car to list
-                add(car);
-            }
-            catch(Exception e)
-            {
-                e.printStackTrace();
-            }
+            //assign location in center of window
+            car.setLocation(window);
+
+            //assign spite image
+            car.setImage(image);
+
+            //add car to list
+            add(car);
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
         }
     }
     
@@ -122,7 +139,22 @@ public class Cars implements Disposable, IElement
     {
         for (int i = 0; i < cars.size(); i++)
         {
-            cars.get(i).update(engine);
+            Car car = cars.get(i);
+            
+            if (!car.isHuman())
+            {
+                //the current map we are on
+                final StaticMap map = engine.getManager().getMaps().getMap();
+                
+                //the screen where gameplay will take place
+                final Rectangle screen = engine.getManager().getWindow();
+                
+                //set car location from perspective to the human
+                car.setX(map.getX() + (screen.width / 2) - map.getAdjustedX(car, screen));
+                car.setY(map.getY() + (screen.height / 2) - map.getAdjustedY(car, screen));
+            }
+
+            car.update(engine);
         }
     }
     

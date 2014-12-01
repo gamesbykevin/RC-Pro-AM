@@ -16,7 +16,7 @@ public final class Human extends Car
     public void update(final Engine engine) throws Exception
     {
         //update basic elements for car: gravity, speed, etc...
-        super.updateBasic(engine.getManager().getMaps().getMap().getTrack());
+        updateBasicElements(engine.getManager().getMaps().getMap().getTrack());
         
         //get keyboard input object
         final Keyboard keyboard = engine.getKeyboard();

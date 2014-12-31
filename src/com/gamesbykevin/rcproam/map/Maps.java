@@ -30,14 +30,14 @@ public class Maps implements IElement, Disposable
     private static final int TOTAL_MAPS = 8;
     
     //the different tracks
-    private static final int TRACK_01 = 0;
-    private static final int TRACK_02 = 1;
-    private static final int TRACK_03 = 2;
-    private static final int TRACK_04 = 3;
-    private static final int TRACK_05 = 4;
-    private static final int TRACK_06 = 5;
-    private static final int TRACK_07 = 6;
-    private static final int TRACK_08 = 7;
+    protected static final int TRACK_01 = 0;
+    protected static final int TRACK_02 = 1;
+    protected static final int TRACK_03 = 2;
+    protected static final int TRACK_04 = 3;
+    protected static final int TRACK_05 = 4;
+    protected static final int TRACK_06 = 5;
+    protected static final int TRACK_07 = 6;
+    protected static final int TRACK_08 = 7;
     
     //we will track the progress of the map creation
     private Progress progress;
@@ -234,7 +234,7 @@ public class Maps implements IElement, Disposable
             }
             
             //add map to list
-            maps.add(new StaticMap(offsetCol, offsetRow, startCol, startRow, image));
+            maps.add(new StaticMap(offsetCol, offsetRow, startCol, startRow, image, progress.getCount()));
             
             //increase the progress
             progress.increase();

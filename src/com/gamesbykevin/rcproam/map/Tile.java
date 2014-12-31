@@ -5,9 +5,6 @@ public class Tile
     //is this tile part of the road
     private boolean road = false;
     
-    //the length back to the starting line
-    private int cost = 0;
-    
     //has this tile been visited
     private boolean visited = false;
     
@@ -32,24 +29,6 @@ public class Tile
     protected boolean isRoad()
     {
         return this.road;
-    }
-    
-    /**
-     * Get the cost
-     * @return the length back to the start position
-     */
-    protected int getCost()
-    {
-        return this.cost;
-    }
-    
-    /**
-     * Set the cost
-     * @param cost the length from this tile to the starting position
-     */
-    protected void setCost(final int cost)
-    {
-        this.cost = cost;
     }
     
     /**

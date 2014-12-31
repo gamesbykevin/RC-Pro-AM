@@ -1,6 +1,5 @@
 package com.gamesbykevin.rcproam.map;
 
-import com.gamesbykevin.rcproam.map.Tile;
 import com.gamesbykevin.framework.base.Cell;
 import com.gamesbykevin.framework.resources.Disposable;
 import java.awt.Color;
@@ -141,70 +140,6 @@ public final class Track implements Disposable
     protected void setVisited(final int column, final int row, final boolean result)
     {
         key[row][column].setVisited(result);
-    }
-    
-    /**
-     * Set the cost of a tile
-     * @param cell Location
-     * @param cost The distance from the specified location back to the starting point
-     */
-    protected void setCost(final Cell cell, final int cost)
-    {
-        setCost((int)cell.getCol(), (int)cell.getRow(), cost);
-    }
-    
-    /**
-     * Set the cost of a tile
-     * @param column
-     * @param row
-     * @param cost The distance from the specified location back to the starting point
-     */
-    protected void setCost(final double column, final double row, final int cost)
-    {
-        setCost((int)column, (int)row, cost);
-    }
-    
-    /**
-     * Set the cost of a tile
-     * @param column
-     * @param row
-     * @param cost The distance from the specified location back to the starting point
-     */
-    protected void setCost(final int column, final int row, final int cost)
-    {
-        key[row][column].setCost(cost);
-    }
-    
-    /**
-     * Get the cost of a tile
-     * @param cell Location
-     * @return cost The distance from the specified location back to the starting point
-     */
-    public int getCost(final Cell cell)
-    {
-        return getCost((int)cell.getCol(), (int)cell.getRow());
-    }
-    
-    /**
-     * Get the cost of a tile
-     * @param column
-     * @param row
-     * @return cost The distance from the specified location back to the starting point
-     */
-    public int getCost(final double column, final double row)
-    {
-        return getCost((int)column, (int)row);
-    }
-    
-    /**
-     * Get the cost of a tile
-     * @param column
-     * @param row
-     * @return cost The distance from the specified location back to the starting point
-     */
-    public int getCost(final int column, final int row)
-    {
-        return key[row][column].getCost();
     }
     
     @Override

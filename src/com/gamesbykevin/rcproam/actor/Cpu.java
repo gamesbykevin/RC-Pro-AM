@@ -4,87 +4,119 @@ import com.gamesbykevin.rcproam.car.Car;
 import com.gamesbykevin.rcproam.engine.Engine;
 import com.gamesbykevin.rcproam.map.Track;
 
+import com.gamesbykevin.framework.base.Cell;
+
+import java.util.Random;
+
 public final class Cpu extends Car
 {
-    private enum Direction
-    {
-        North, South, East, West
-    }
-    
     //the angles to face for the appropriate destination
     private static final double ANGLE_WEST = 45;
-    private static final double ANGLE_NORTH = 135;
-    private static final double ANGLE_EAST = 225;
-    private static final double ANGLE_SOUTH = 315;
     
-    //maximum speed allowed while driving on the road
-    private static final double DEFAULT_MAXIMUM_SPEED_ROAD = 0.025;
+    //the range of speed for a car, each cpu will have a different top speed
+    private static final double DEFAULT_SPEED_ROAD_MAX = DEFAULT_MAXIMUM_SPEED_ROAD * 1.1;
+    private static final double DEFAULT_SPEED_ROAD_MIN = DEFAULT_MAXIMUM_SPEED_ROAD * .85;
     
-    //the max speed allowed while turning
-    private static final double TURN_SPEED = (DEFAULT_MAXIMUM_SPEED_ROAD * .35);
+    //set the randomly picked max road speed
+    private double defaultMaxRoadSpeed;
     
-    public Cpu() throws Exception
+    //set the max speed allowed while turning
+    private double defaultMaxTurnSpeed;
+    
+    //the max turn speed will be a fraction of the max road speed
+    private static final double TURN_SPEED_RATIO = .75;
+    
+    public Cpu(final Random random) throws Exception
     {
         super(false);
         
-        //cpu accelerate speed will be faster
-        super.setAccelerateRate(Car.DEFAULT_ACCELERATE_SPEED * 2);
+        if (DEFAULT_SPEED_ROAD_MIN > DEFAULT_SPEED_ROAD_MAX)
+            throw new Exception("The minimum road speed can't be greater than the maximum");
         
-        //set max driving speed
-        super.setMaxRoadSpeed(DEFAULT_MAXIMUM_SPEED_ROAD * 2);
+        //cpu accelerate speed 
+        super.setAccelerateRate(Car.DEFAULT_ACCELERATE_SPEED);
+        
+        //pick a random max road speed for each cpu
+        final double speed = ((DEFAULT_SPEED_ROAD_MAX - DEFAULT_SPEED_ROAD_MIN) * random.nextDouble()) + DEFAULT_SPEED_ROAD_MIN;
+        
+        //set the random max road speed
+        setDefaultMaxRoadSpeed(speed);
+        
+        //set the max speed allowed while turning
+        setDefaultMaxTurnSpeed(getDefaultMaxRoadSpeed() * TURN_SPEED_RATIO);
+        
+        //set max driving speed since the cpu starts on a road
+        super.setMaxRoadSpeed(getDefaultMaxRoadSpeed());
+    }
+    
+    /**
+     * Get the default max turn speed
+     * @return the max speed allowed while turning
+     */
+    private double getDefaultMaxTurnSpeed()
+    {
+        return this.defaultMaxTurnSpeed;
+    }
+    
+    /**
+     * Set the default max turn speed
+     * @param defaultMaxTurnSpeed the max speed allowed while turning
+     */
+    private void setDefaultMaxTurnSpeed(final double defaultMaxTurnSpeed)
+    {
+        this.defaultMaxTurnSpeed = defaultMaxTurnSpeed;
+    }
+    
+    /**
+     * Get the default max road speed set
+     * @return the max speed allowed while driving on a road
+     */
+    private double getDefaultMaxRoadSpeed()
+    {
+        return this.defaultMaxRoadSpeed;
+    }
+    
+    /**
+     * Set the default max road speed
+     * @param defaultMaxRoadSpeed the max speed allowed while driving on a road
+     */
+    private void setDefaultMaxRoadSpeed(final double defaultMaxRoadSpeed)
+    {
+        this.defaultMaxRoadSpeed = defaultMaxRoadSpeed;
     }
     
     @Override
     public void update(final Engine engine) throws Exception
     {
-        //update basic elements for car: gravity, speed, etc...
-        updateBasicElements(engine.getManager().getMaps().getMap().getTrack());
+        //create track reference variable to simplify the code
+        final Track track = engine.getManager().getMaps().getMap().getTrack();
+        
+        //update basic elements for car: gravity, speed, race progress, etc...
+        updateBasicElements(track);
         
         //always accelerate, for now
         super.setAccelerate(true);
         
-        //create track reference variable to simplify the code
-        final Track track = engine.getManager().getMaps().getMap().getTrack();
-        
         //get the facing angle in degrees
         final double degrees = getFacingAngle();
         
-        //the angle we should be facing
-        final double destination = 0;//getDestination();
+        //the location of the waypoint we want to head towards
+        final Cell goal = super.getWayPointLocation(track);
         
-        //determine if we are facing the correct angle
-        if (degrees != destination)
+        //the angle we should be facing
+        final double destination = getDestination(goal);
+        
+        //how far away from our destination are we
+        final double difference = (degrees > destination) ? degrees - destination : destination - degrees;
+        
+        //make sure the cpu is turning towards the way point within a certain amount
+        if (difference >= Car.AI_INTERVAL)
         {
             //set max speed while we are turning
-            setMaxRoadSpeed(TURN_SPEED);
+            setMaxRoadSpeed(getDefaultMaxTurnSpeed());
             
-            //now determine the most efficient way to turn
-            if (degrees > destination)
-            {
-                if (degrees - destination > 180)
-                {
-                    setTurnRight(true);
-                    setTurnLeft(false);
-                }
-                else
-                {
-                    setTurnRight(false);
-                    setTurnLeft(true);
-                }
-            }
-            else
-            {
-                if (destination - degrees > 180)
-                {
-                    setTurnRight(false);
-                    setTurnLeft(true);
-                }
-                else
-                {
-                    setTurnRight(true);
-                    setTurnLeft(false);
-                }
-            }
+            //now perform turn
+            performTurn(degrees, destination);
         }
         else
         {
@@ -93,7 +125,76 @@ public final class Cpu extends Car
             setTurnLeft(false);
             
             //set max speed
-            setMaxRoadSpeed(DEFAULT_MAXIMUM_SPEED_ROAD);
+            setMaxRoadSpeed(getDefaultMaxRoadSpeed());
         }
+    }
+    
+    /**
+     * Perform turn in the most efficient way.
+     * @param facing The angle we are facing (in degrees)
+     * @param destination The angle we want to face (in degrees)
+     */
+    private void performTurn(final double facing, final double destination)
+    {
+        //now determine the most efficient way to turn
+        if (facing > destination)
+        {
+            if (facing - destination > 180)
+            {
+                setTurnRight(true);
+                setTurnLeft(false);
+            }
+            else
+            {
+                setTurnRight(false);
+                setTurnLeft(true);
+            }
+        }
+        else
+        {
+            if (destination - facing > 180)
+            {
+                setTurnRight(false);
+                setTurnLeft(true);
+            }
+            else
+            {
+                setTurnRight(true);
+                setTurnLeft(false);
+            }
+        }
+    }
+    
+    /**
+     * Get the required destination to face
+     * @param cell The location of the next way point
+     * @return The facing angle to get to the next way point (in degrees)
+     */
+    private double getDestination(final Cell cell)
+    {
+        //calculate the slope
+        final double slope = (cell.getRow() - getRow()) / (cell.getCol() - getCol());
+        
+        //get the facing angle
+        double angle = Math.atan(slope);
+        
+        //if the difference is negative adjust
+        if (cell.getCol() - getCol() < 0)
+            angle += Math.PI;
+        
+        //flip the direction because we start driving west by default
+        angle += Math.toRadians(180);
+        
+        //make sure radians stay within range
+        if (angle > (2 * Math.PI))
+            angle -= (2 * Math.PI);
+        if (angle < 0)
+            angle += (2 * Math.PI);
+        
+        //convert radians to degrees, adding the extra angle to offset isometric angle since default direction is west
+        angle = Math.toDegrees(angle) + ANGLE_WEST;
+
+        //return result
+        return angle;
     }
 }

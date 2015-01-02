@@ -10,7 +10,6 @@ import com.gamesbykevin.rcproam.map.Maps;
 import com.gamesbykevin.rcproam.menu.CustomMenu;
 import com.gamesbykevin.rcproam.menu.CustomMenu.*;
 import com.gamesbykevin.rcproam.resources.*;
-import com.gamesbykevin.rcproam.shared.Shared;
 import java.awt.Color;
 
 import java.awt.Graphics;
@@ -34,6 +33,12 @@ public final class Manager implements IManager
     //the maps of the tracks
     private Maps maps;
     
+    //this timer will prevent the cars from racing for 5 seconds
+    private Timer timer;
+    
+    //the start delay is 5 seconds
+    private static final long START_DELAY = Timers.toNanoSeconds(5000L);
+    
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
      * @param engine Engine for our game that contains all objects needed
@@ -44,7 +49,6 @@ public final class Manager implements IManager
         //determine if sound is enabled
         final boolean enabled = (Toggle.values()[engine.getMenu().getOptionSelectionIndex(LayerKey.OptionsInGame, OptionKey.Sound)] == Toggle.Off);
 
-        
         //set the audio depending on menu setting
         engine.getResources().setAudioEnabled(enabled);
         
@@ -57,6 +61,9 @@ public final class Manager implements IManager
         
         //are we playing random Mode or Campaign
         //random = CustomMenu.Toggle.values()[engine.getMenu().getOptionSelectionIndex(CustomMenu.LayerKey.Options, CustomMenu.OptionKey.Mode)];
+        
+        //create new timer
+        this.timer = new Timer(START_DELAY);
     }
     
     @Override
@@ -68,18 +75,25 @@ public final class Manager implements IManager
             this.cars = new Cars();
             
             //add human car first
-            this.cars.add(getWindow(), engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED, false);
+            this.cars.addHuman(engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED);
+            //this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED,    engine.getRandom());
+            
+            //set human in center of screen
+            this.cars.getHuman().setLocation(engine.getMain().getScreen());
             
             //add cpu car(s)
-            this.cars.add(getWindow(), engine.getResources().getGameImage(GameImages.Keys.TruckBlue), Color.BLUE, false);
-            this.cars.add(getWindow(), engine.getResources().getGameImage(GameImages.Keys.TruckGreen), Color.GREEN, false);
-            this.cars.add(getWindow(), engine.getResources().getGameImage(GameImages.Keys.TruckOrange), Color.ORANGE, false);
+            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckBlue), Color.BLUE,    engine.getRandom());
+            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckGreen), Color.GREEN,  engine.getRandom());
+            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckOrange), Color.ORANGE,engine.getRandom());
         }
         
         if (this.maps == null)
         {
             this.maps = new Maps(engine.getResources());
         }
+        
+        //reset the timer
+        this.timer.reset();
     }
     
     public Cars getCars()
@@ -156,18 +170,35 @@ public final class Manager implements IManager
                     //assign the track based on the option selection
                     maps.setIndex(engine.getMenu().getOptionSelectionIndex(CustomMenu.LayerKey.Options, CustomMenu.OptionKey.Track));
                     
-                    //place the cars
+                    //place the cars at their starting location
                     maps.placeCars(cars);
+                    
+                    //update map
+                    maps.update(engine);
+                    
+                    //reset the race progress of the cars
+                    cars.resetCarProgress();
                 }
             }
             else
             {
-                //update map first
-                maps.update(engine);
-                
-                //now update the cars
-                if (cars != null)
-                    cars.update(engine);
+                //check if the time delay has passed for the race to start
+                if (timer.hasTimePassed())
+                {
+                    //update map first
+                    maps.update(engine);
+                    
+                    //now update the cars
+                    if (cars != null)
+                    {
+                        cars.update(engine);
+                    }
+                }
+                else
+                {
+                    //update the timer
+                    timer.update(engine.getMain().getTime());
+                }
             }
         }
     }

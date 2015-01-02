@@ -42,6 +42,10 @@ public class Maps implements IElement, Disposable
     //we will track the progress of the map creation
     private Progress progress;
     
+    //the range for the most/least amount of laps required to complete a race for a given map
+    private static final int MAX_LAPS = 5;
+    private static final int MIN_LAPS = 2;
+    
     public Maps(final Resources resources)
     {
         //create a new list of maps
@@ -61,7 +65,7 @@ public class Maps implements IElement, Disposable
     }
     
     /**
-     * Place the car at the starting position of the current map
+     * Place the cars at the starting position of the current map
      * @param car The car we want to place
      * @throws Exception if there are no cars to place
      */
@@ -233,8 +237,14 @@ public class Maps implements IElement, Disposable
                     throw new Exception("staticMap is not setup: " + progress.getCount());
             }
             
+            //pick a random number of laps required to complete the track
+            final int count = engine.getRandom().nextInt(MAX_LAPS - MIN_LAPS) + MIN_LAPS;
+            
+            //create a new static map
+            StaticMap map = new StaticMap(offsetCol, offsetRow, startCol, startRow, image, progress.getCount(), count);
+            
             //add map to list
-            maps.add(new StaticMap(offsetCol, offsetRow, startCol, startRow, image, progress.getCount()));
+            maps.add(map);
             
             //increase the progress
             progress.increase();
@@ -243,6 +253,9 @@ public class Maps implements IElement, Disposable
         {
             //update the map location based on the human location
             getMap().updateLocation(engine.getManager().getCars().getHuman(), engine.getManager().getWindow());
+            
+            //adjust other cars from perspective of the human car
+            engine.getManager().getCars().adjustCarLocation(engine);
         }
     }
     
@@ -275,6 +288,6 @@ public class Maps implements IElement, Disposable
             return;
         
         //draw the mini-map
-        getMap().getTrack().renderMiniMap(graphics, startX, startY);
+        getMap().renderMiniMap(graphics, startX, startY);
     }
 }

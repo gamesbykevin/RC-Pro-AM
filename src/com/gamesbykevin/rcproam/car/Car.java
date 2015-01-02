@@ -1,15 +1,17 @@
 package com.gamesbykevin.rcproam.car;
 
 import com.gamesbykevin.framework.base.Animation;
+import com.gamesbykevin.framework.base.Cell;
 import com.gamesbykevin.framework.base.Sprite;
 import com.gamesbykevin.framework.resources.Disposable;
 
 import com.gamesbykevin.rcproam.engine.Engine;
 import com.gamesbykevin.rcproam.map.Track;
+import com.gamesbykevin.rcproam.map.TrackTracker;
 import com.gamesbykevin.rcproam.shared.IElement;
 import com.gamesbykevin.rcproam.shared.Shared;
-import java.awt.Color;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
@@ -33,6 +35,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
     private boolean accelerate = false;
     private boolean attack = false;
     
+    //is the car controlled by a human
     private final boolean human;
     
     //how many degrees is each turn between each 15 degree interval
@@ -40,6 +43,9 @@ public abstract class Car extends Sprite implements Disposable, IElement
     
     //each turn will be 15 degrees
     protected static final double TURN_INTERVAL = 15;
+    
+    //the AI needs to be within a certain angle when moving to the next way point
+    protected static final double AI_INTERVAL = (TURN_INTERVAL / 2);
     
     //speed at which we are moving
     private double speed = 0;
@@ -55,7 +61,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
     protected static final double STARTING_SPEED = 0.0025;
     
     //maximum speed allowed while driving on the road
-    private static final double DEFAULT_MAXIMUM_SPEED_ROAD = 0.0125;
+    protected static final double DEFAULT_MAXIMUM_SPEED_ROAD = 0.0125;
     
     //maximum speed allowed while driving off road
     private static final double DEFAULT_MAXIMUM_SPEED_OFF_ROAD = 0.00125;
@@ -79,6 +85,9 @@ public abstract class Car extends Sprite implements Disposable, IElement
     //the velocity of the car moving on the mini-map
     private double mapVelocityX = 0;
     private double mapVelocityY = 0;
+    
+    //object used to measure progress for a given race
+    private TrackTracker tracker;
     
     public enum Direction
     {
@@ -143,6 +152,18 @@ public abstract class Car extends Sprite implements Disposable, IElement
         
         //make sure appropriate animation is displayed
         correctAnimation();
+        
+        //create new track tracker
+        this.tracker = new TrackTracker();
+    }
+    
+    /**
+     * Get the track tracker
+     * @return The object representing the progress for this car in a race
+     */
+    public TrackTracker getTracker()
+    {
+        return this.tracker;
     }
     
     /**
@@ -202,6 +223,10 @@ public abstract class Car extends Sprite implements Disposable, IElement
         return this.attack;
     }
     
+    /**
+     * Assign car color which will be shown on mini map
+     * @param carColor The desired car color
+     */
     protected void setCarColor(final Color carColor)
     {
         this.carColor = carColor;
@@ -572,6 +597,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
      * 1. Mini-map location<br>
      * 2. Maximum Speed depending on mini-map location<br>
      * 3. Basic turning functions<br>
+     * 4. Manage track progress for this car in a race
      * @param track The current track in play
      */
     protected void updateBasicElements(final Track track)
@@ -600,6 +626,19 @@ public abstract class Car extends Sprite implements Disposable, IElement
         {
             turnLeft();
         }
+        
+        //manage the race progress for this car
+        getTracker().updateProgress(track, this);
+    }
+    
+    /**
+     * Get the way point location
+     * @param track The current track we are racing on
+     * @return The location of the current way point
+     */
+    protected Cell getWayPointLocation(final Track track)
+    {
+        return getTracker().getWayPointLocation(track);
     }
     
     /**
@@ -627,10 +666,10 @@ public abstract class Car extends Sprite implements Disposable, IElement
     public abstract void update(final Engine engine) throws Exception;
     
     /**
-     * Turn the car.
+     * Turn the car and update the correct animation
      * @param angle The angle in radians
      */
-    protected void turn(final double angle)
+    private void turn(final double angle)
     {
         //set the new angle
         setAngle(getAngle() + angle);
@@ -645,7 +684,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
     @Override
     public void render(final Graphics graphics)
     {
-        //draw animation
+        //draw car animation
         super.draw(graphics);
     }
     

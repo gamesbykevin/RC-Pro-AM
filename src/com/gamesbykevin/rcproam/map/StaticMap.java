@@ -19,6 +19,9 @@ public final class StaticMap extends Sprite implements Disposable
     //the map of the track
     private Track track;
     
+    //the required amount of laps to complete the track
+    private int laps;
+    
     //the size of the mini-map
     private static final int PIXEL_WIDTH_SMALL_MAP = 84;
     private static final int PIXEL_HEIGHT_SMALL_MAP = 50;
@@ -36,25 +39,19 @@ public final class StaticMap extends Sprite implements Disposable
     //the starting col, row location for the car(s)
     private List<Cell> startingLocations;
     
-    //the check points in the map located at each turn
-    private List<Cell> wayPoints;
-    
-    protected StaticMap(final double offsetCol, final double offsetRow, final double startCol, final double startRow, final Image image, final int trackNo) throws Exception
+    protected StaticMap(final double offsetCol, final double offsetRow, final double startCol, final double startRow, final Image image, final int trackNo, final int laps) throws Exception
     {
         this.offsetCol = offsetCol;
         this.offsetRow = offsetRow;
-        
-        //create a new list for the way pojnts
-        this.wayPoints = new ArrayList<>();
         
         //create a new list for the starting location
         this.startingLocations = new ArrayList<>();
         
         //add the starting locations for this map
-        this.startingLocations.add(new Cell(startCol,       startRow));
-        this.startingLocations.add(new Cell(startCol - 1,       startRow - 1.5));
-        this.startingLocations.add(new Cell(startCol + 1, startRow - .25));
-        this.startingLocations.add(new Cell(startCol + 1, startRow - 1.5));
+        this.startingLocations.add(new Cell(startCol,     startRow));
+        this.startingLocations.add(new Cell(startCol,     startRow - 1.5));
+        this.startingLocations.add(new Cell(startCol + 1.75, startRow));
+        this.startingLocations.add(new Cell(startCol + 1.75, startRow - 1.5));
         
         //assign image
         this.assignImage(image);
@@ -63,28 +60,44 @@ public final class StaticMap extends Sprite implements Disposable
         this.createTrack();
         
         //create a checkpoint at each turn for the ai to know where to drive
-        this.createWaypoints(trackNo);
+        this.track.createWaypoints(trackNo);
+        
+        //set the number of laps required to complete
+        this.setLaps(laps);
+    }
+    
+    /**
+     * Set the amount of laps required to complete the track
+     * @param laps The number of laps required to complete the track
+     */
+    protected void setLaps(final int laps)
+    {
+        this.laps = laps;
+    }
+    
+    /***
+     * Get the total number of laps required to complete the track
+     * @return The total number of laps required to complete the track
+     */
+    protected int getLaps()
+    {
+        return this.laps;
     }
     
     /**
      * Place the cars at the start position
      * @param cars The container for the cars in play
+     * @throws Exception If the number of starting locations is not equal to the number of cars
      */
-    public void placeCars(final Cars cars)
+    public void placeCars(final Cars cars) throws Exception
     {
-        //the index of the current starting location we want
-        int index = 0;
+        if (cars.getSize() != startingLocations.size())
+            throw new Exception("The # of cars is not equal to the # of starting locations");
         
         for (int i = 0; i < cars.getSize(); i++)
         {
-            cars.get(i).setCol(startingLocations.get(index));
-            cars.get(i).setRow(startingLocations.get(index));
-            
-            index++;
-            
-            //if the index is at the end, restart back at 0
-            if (index >= startingLocations.size())
-                index = 0;
+            cars.get(i).setCol(startingLocations.get(i));
+            cars.get(i).setRow(startingLocations.get(i));
         }
     }
     
@@ -109,162 +122,6 @@ public final class StaticMap extends Sprite implements Disposable
         
         //the size of the map will be the size of the image
         super.setDimensions(super.getImage());
-    }
-    
-    /**
-     * Add a way point at the specified location
-     * @param col Column
-     * @param row Row
-     */
-    private void addWayPoint(final double col, final double row)
-    {
-        this.wayPoints.add(new Cell(col, row));
-    }
-    
-    /**
-     * Create check points at every turn
-     * @param trackNo The track we need to create way points for
-     * @throws Exception An exception will be thrown if the track is not setup
-     */
-    private void createWaypoints(final int trackNo) throws Exception
-    {
-        //add the way points in the specified order
-        switch (trackNo)
-        {
-            case Maps.TRACK_01:
-                addWayPoint(30, 32.5);
-                addWayPoint(25.5, 30);
-                addWayPoint(25.5, 14);
-                addWayPoint(30, 9.5);
-                addWayPoint(38.5, 9.5);
-                addWayPoint(45, 17.5);
-                addWayPoint(55, 17.5);
-                addWayPoint(57.5, 22);
-                addWayPoint(57.5, 30);
-                addWayPoint(55, 33.5);
-                break;
-
-            case Maps.TRACK_02:
-                addWayPoint(39, 25.5);
-                addWayPoint(31, 32.5);
-                addWayPoint(28, 32.5);
-                addWayPoint(25.5, 29);
-                addWayPoint(25.5, 21);
-                addWayPoint(30, 17.5);
-                addWayPoint(46, 17.5);
-                addWayPoint(52, 10);
-                addWayPoint(56, 10.5);
-                addWayPoint(57.5, 14);
-                addWayPoint(57.5, 22);
-                addWayPoint(55, 25.5);
-                break;
-
-            case Maps.TRACK_03:
-                addWayPoint(38, 33.5);
-                addWayPoint(31, 25.5);
-                addWayPoint(21, 25.5);
-                addWayPoint(18.5, 21);
-                addWayPoint(21, 17.5);
-                addWayPoint(55, 17.5);
-                addWayPoint(61, 10);
-                addWayPoint(65.5, 13);
-                addWayPoint(65.5, 22.5);
-                addWayPoint(61, 25.5);
-                addWayPoint(55, 33.5);
-                break;
-
-            case Maps.TRACK_04:
-                addWayPoint(30, 33.5);
-                addWayPoint(25.5, 31);
-                addWayPoint(25.5, 21);
-                addWayPoint(29, 17.5);
-                addWayPoint(40, 17.5);
-                addWayPoint(46, 25.5);
-                addWayPoint(49.5, 22);
-                addWayPoint(49.5, 13.5);
-                addWayPoint(54, 9.5);
-                addWayPoint(58.5, 13);
-                addWayPoint(58.5, 30);
-                addWayPoint(55, 33.5);
-                break;
-
-            case Maps.TRACK_05:
-                addWayPoint(14, 25.5);
-                addWayPoint(10.5, 22);
-                addWayPoint(10.5, 13);
-                addWayPoint(13, 9.5);
-                addWayPoint(22, 9.5);
-                addWayPoint(29, 17.5);
-                addWayPoint(70, 17.5);
-                addWayPoint(73.5, 22);
-                addWayPoint(73.5, 31);
-                addWayPoint(71, 33.5);
-                addWayPoint(60, 33.5);
-                addWayPoint(54, 26);
-                break;
-
-            case Maps.TRACK_06:
-                addWayPoint(13, 33.5);
-                addWayPoint(10.5, 29);
-                addWayPoint(14, 25.5);
-                addWayPoint(23, 25.5);
-                addWayPoint(25.5, 22);
-                addWayPoint(23, 17.5);
-                addWayPoint(13, 17.5);
-                addWayPoint(10.5, 13);
-                addWayPoint(13, 9.5);
-                addWayPoint(31, 9.5);
-                addWayPoint(34.5, 13);
-                addWayPoint(34.5, 23);
-                addWayPoint(37, 25.5);
-                addWayPoint(63, 25.5);
-                addWayPoint(69, 17.5);
-                addWayPoint(73.5, 21);
-                addWayPoint(73.5, 31);
-                addWayPoint(71, 33.5);
-                break;
-
-            case Maps.TRACK_07:
-                addWayPoint(14, 33.5);
-                addWayPoint(10.5, 30);
-                addWayPoint(10.5, 14);
-                addWayPoint(13, 10);
-                addWayPoint(21, 17);
-                addWayPoint(26, 13);
-                addWayPoint(30, 9.5);
-                addWayPoint(71, 9.5);
-                addWayPoint(73.5, 13);
-                addWayPoint(71, 17.5);
-                addWayPoint(61, 17.5);
-                addWayPoint(55, 25.5);
-                addWayPoint(45, 25.5);
-                addWayPoint(39, 33.5);
-                break;
-
-            case Maps.TRACK_08:
-                addWayPoint(45, 33.5);
-                addWayPoint(41.5, 30);
-                addWayPoint(41.5, 21);
-                addWayPoint(38, 18);
-                addWayPoint(33.5, 21);
-                addWayPoint(33.5, 30);
-                addWayPoint(30, 33.5);
-                addWayPoint(13, 33.5);
-                addWayPoint(9.5, 30);
-                addWayPoint(9.5, 13);
-                addWayPoint(13, 9.5);
-                addWayPoint(70, 9.5);
-                addWayPoint(73.5, 13);
-                addWayPoint(69, 17.5);
-                addWayPoint(66.5, 21);
-                addWayPoint(68, 25.5);
-                addWayPoint(73.5, 30);
-                addWayPoint(70, 33.5);
-                break;
-
-            default:
-                throw new Exception("way points are not setup: " + trackNo);
-        }
     }
     
     /**
@@ -363,7 +220,7 @@ public final class StaticMap extends Sprite implements Disposable
     
     /**
      * Get adjusted x-coordinate.<br>
-     * This will determine where the isometric coordinate is to be placed based on the car location
+     * This will determine where the isometric coordinate is to be placed, based on the car location
      * @param car The car we want to calculate the coordinate
      * @param screen Screen where game play takes place
      * @return x-coordinate
@@ -423,17 +280,6 @@ public final class StaticMap extends Sprite implements Disposable
             startingLocations = null;
         }
         
-        if (wayPoints != null)
-        {
-            for (int i = 0; i < wayPoints.size(); i++)
-            {
-                wayPoints.set(i, null);
-            }
-            
-            wayPoints.clear();
-            wayPoints = null;
-        }
-        
         if (track != null)
         {
             track.dispose();
@@ -446,5 +292,33 @@ public final class StaticMap extends Sprite implements Disposable
     public void render(final Graphics graphics)
     {
         super.draw(graphics);
+    }
+    
+    /**
+     * Render the mini-map of this track
+     * @param graphics Graphics object
+     * @param startX x-coordinate where we want to draw the mini-map
+     * @param startY y-coordinate where we want to draw the mini-map
+     */
+    protected void renderMiniMap(final Graphics graphics, final int startX, final int startY)
+    {
+        for (int row = 0; row < getTrack().getRows(); row++)
+        {
+            for (int col = 0; col < getTrack().getColumns(); col++)
+            {
+                if (getTrack().isRoad(col, row))
+                {
+                    //if true, then this is part of the road
+                    graphics.setColor(Track.ROAD_COLOR);
+                    graphics.drawRect(startX + (col * getTrack().getWidth()), startY + (row * getTrack().getHeight()), getTrack().getWidth(), getTrack().getHeight());
+                }
+                else
+                {
+                    //anything else is off the road
+                    graphics.setColor(Track.OFF_ROAD_COLOR);
+                    graphics.drawRect(startX + (col * getTrack().getWidth()), startY + (row * getTrack().getHeight()), getTrack().getWidth(), getTrack().getHeight());
+                }
+            }
+        }
     }
 }

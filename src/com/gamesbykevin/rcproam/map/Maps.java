@@ -11,6 +11,8 @@ import com.gamesbykevin.rcproam.shared.IElement;
 
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +48,16 @@ public class Maps implements IElement, Disposable
     private static final int MAX_LAPS = 5;
     private static final int MIN_LAPS = 2;
     
+    //image for the minimap
+    private BufferedImage minimap;
+    
+    //graphics object for drawing the minimap
+    private Graphics2D minimapGraphics;
+    
+    //the size of the minimap
+    private static final int MINIMAP_WIDTH = StaticMap.PIXEL_WIDTH_SMALL_MAP;
+    private static final int MINIMAP_HEIGHT = StaticMap.PIXEL_HEIGHT_SMALL_MAP;
+    
     public Maps(final Resources resources)
     {
         //create a new list of maps
@@ -53,6 +65,12 @@ public class Maps implements IElement, Disposable
         
         //create progress tracker
         this.progress = new Progress(TOTAL_MAPS);
+        
+        //create new image
+        this.minimap = new BufferedImage(StaticMap.PIXEL_WIDTH_SMALL_MAP, StaticMap.PIXEL_HEIGHT_SMALL_MAP, BufferedImage.TYPE_INT_RGB);
+        
+        //get graphics object to be able to write to this image
+        this.minimapGraphics = minimap.createGraphics();
     }
     
     /**
@@ -131,6 +149,18 @@ public class Maps implements IElement, Disposable
         
         maps.clear();
         maps = null;
+        
+        if (minimap != null)
+        {
+            minimap.flush();
+            minimap = null;
+        }
+        
+        if (minimapGraphics != null)
+        {
+            minimapGraphics.dispose();
+            minimapGraphics = null;
+        }
     }
     
     /**
@@ -278,16 +308,23 @@ public class Maps implements IElement, Disposable
     /**
      * Render the mini-map of the current assigned map
      * @param graphics Graphics object
+     * @param cars The object containing cars in play
      * @param startX x-coordinate where we want to draw the mini-map
      * @param startY y-coordinate where we want to draw the mini-map
      */
-    public void renderMiniMap(final Graphics graphics, final int startX, final int startY)
+    public void renderMiniMap(final Graphics graphics, final Cars cars, final int startX, final int startY)
     {
         //don't continue if maps aren't loaded
         if (isLoading())
             return;
         
-        //draw the mini-map
-        getMap().renderMiniMap(graphics, startX, startY);
+        //render the minimap to the image
+        getMap().renderMiniMap(minimapGraphics);
+        
+        //now draw the cars on top of the mini map to the image
+        cars.renderMiniMapLocations(minimapGraphics);
+        
+        //now draw the final image
+        graphics.drawImage(minimap, startX, startY, MINIMAP_WIDTH, MINIMAP_HEIGHT, null);
     }
 }

@@ -3,13 +3,19 @@ package com.gamesbykevin.rcproam.map;
 import com.gamesbykevin.rcproam.car.Car;
 
 import com.gamesbykevin.framework.base.Cell;
+import com.gamesbykevin.framework.resources.Disposable;
+import com.gamesbykevin.framework.util.Timer;
+import com.gamesbykevin.framework.util.Timers;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class will keep track of a cars progress for a given track.<br>
  * This class will be used to determine who wins the race, and the car rank while the race is in progress
  * @author GOD
  */
-public class TrackTracker 
+public class TrackTracker implements Disposable
 {
     //the maximum allowed distance from a way point to determine if we reached the way point for the cpu
     private static final double WAYPOINT_DISTANCE_CPU = 1.5;
@@ -23,19 +29,47 @@ public class TrackTracker
     //the current way point a car are targeting
     private int target = 0;
 
+    //timer used to track the time of each lap
+    private Timer timer;
+    
+    //the text description of each lap
+    private List<String> lapDescription;
+    
     public TrackTracker()
     {
+        //create new timer
+        this.timer = new Timer();
+        
+        //create list which will contain each lap time
+        this.lapDescription = new ArrayList<>();
+        
+        //reset 
         reset();
+    }
+    
+    @Override
+    public void dispose()
+    {
+        timer = null;
+        
+        if (lapDescription != null)
+        {
+            lapDescription.clear();
+            lapDescription = null;
+        }
     }
     
     /**
      * Update the race progress
      * @param track The track currently racing on
      * @param car The car we want to update progress for
-     * @param goal The location of the next way point
+     * @param time The number of nanoseconds per update
      */
-    public void updateProgress(final Track track, final Car car)
+    public void updateProgress(final Track track, final Car car, final long time)
     {
+        //update timer
+        timer.update(time);
+        
         //get the location of the current targeted way point
         final Cell goal = getWayPointLocation(track);
         
@@ -73,6 +107,12 @@ public class TrackTracker
 
                     //increase laps completed
                     addLap();
+                    
+                    //add lap description to list
+                    lapDescription.add("Lap " + getLaps() + " - " + timer.getDescPassed(Timers.FORMAT_6));
+                    
+                    //reset timer
+                    timer.reset();
                 }
             }
             else
@@ -103,6 +143,12 @@ public class TrackTracker
         
         //reset the number of laps completed
         resetLaps();
+        
+        //reset timer
+        timer.reset();
+        
+        //clear list of lap descriptions
+        lapDescription.clear();
     }
     
     /**

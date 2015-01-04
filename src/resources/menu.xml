@@ -27,11 +27,11 @@
         <force>false</force>
         <pause>true</pause>
         <duration>15000</duration>
-        <image>resources/images/menu/untitled.png</image>
-        <optionContainerRatio>0.95</optionContainerRatio>
-        <optionBorderThickness>1.5</optionBorderThickness>
+        <image>resources/images/menu/title.png</image>
+        <optionContainerRatio>0.82</optionContainerRatio>
+        <optionBorderThickness>1</optionBorderThickness>
         <title>R.C. Pro-AM</title>
-        <backgroundMusicLocation></backgroundMusicLocation>
+        <backgroundMusicLocation>resources/audio/menu/music/title.mp3</backgroundMusicLocation>
         <optionSoundLocation>resources/audio/menu/sound/selection.wav</optionSoundLocation>
         <options name="Start Game" next="GameStart" id="GameStart"></options>
         <options name="Options" next="Options" id="Options"></options>

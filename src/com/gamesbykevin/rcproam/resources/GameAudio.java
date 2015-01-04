@@ -16,7 +16,7 @@ public final class GameAudio extends AudioManager
      */
     public enum Keys
     {
-        
+        Engine, EngineLoop, Lap, EngineSlow, Horn, Turn, RaceStart, RaceFinish
     }
     
     public GameAudio() throws Exception

@@ -28,8 +28,11 @@ public final class Main extends Thread implements Disposable
     //our main game engine
     private Engine engine;
     
+    //how many nanoseconds are there in one millisecond
+    private static final double NANO_SECONDS_PER_MILLISECOND = 1000000.0;
+    
     //how many nanoseconds are there in one second
-    private static final long NANO_SECONDS_PER_SECOND = 1000000000;
+    private static final double NANO_SECONDS_PER_SECOND = 1000000000.0;
     
     //need double for accuracy
     private double nanoSecondsPerUpdate;
@@ -42,12 +45,6 @@ public final class Main extends Thread implements Disposable
     
     //cache this graphics object so we aren't constantly creating it
     private Graphics graphics;
-    
-    //count how many updates
-    private int updates = 0;
-    
-    //time used to track updates per second
-    private long time = System.nanoTime();
     
     public Main(final int ups, final JApplet applet)
     {
@@ -64,9 +61,9 @@ public final class Main extends Thread implements Disposable
     }
     
     /**
-     * Main class that runs the game engine
+     * Main class that manages the game engine
      * 
-     * @param ups Engine updates per second
+     * @param ups Desired updates per second
      */
     private Main(final int ups)
     {
@@ -153,50 +150,69 @@ public final class Main extends Thread implements Disposable
         //to keep our game loop active
         boolean active = true;
         
-        //previous time
+        //keep track of the number of updates
+        int updates = 0;
+        
+        //store the time to track ups (updates per second)
         long previous = System.nanoTime();
-        
-        //set the current time
-        time = previous;
-        
-        //variable to keep fps constant
-        double delta = 0;
         
         while (active)
         {
             try
             {
                 //get the current time
-                final long now = System.nanoTime();
+                final long before = System.nanoTime();
                 
-                //update these variables
-                delta += ((now - previous) / nanoSecondsPerUpdate);
+                //update game
+                engine.update(this);
                 
-                //set the current time as the last run
-                previous = now;
-                
-                while(delta >= 1)
-                {
-                    //update game
-                    engine.update(this);
+                //render image
+                renderImage();
 
-                    //render image
-                    renderImage();
-                    
-                    //draw image
-                    drawScreen();
-                    
-                    //add to our counter
-                    updates++;
-                    
-                    //deduct from delta
-                    delta--;
-                    
-                    //check if it is time to display ups
-                    checkCount();
+                //draw image
+                drawScreen();
+                
+                //keep track of the number of updates
+                updates++;
+                
+                //get the time after processing complete
+                final long after = System.nanoTime();
+                
+                //if we are debugging
+                if (Shared.DEBUG)
+                {
+                    //if 1 second has passed display ups
+                    if (after - previous >= NANO_SECONDS_PER_SECOND)
+                    {
+                        //display updates per second
+                        System.out.println("UPS = " + updates);
+
+                        //reset count
+                        updates = 0;
+
+                        //update the previous time with the current
+                        previous = after;
+                    }
                 }
                 
-                Thread.sleep(0, 10);
+                //get the time passed for this update (in nanoseconds)
+                final long passed = (after - before);
+                
+                //get the extra leftover time
+                double remaining = nanoSecondsPerUpdate - passed;
+                
+                //the time remaining can't be negative
+                if (remaining < 0)
+                    remaining = 0;
+                
+                //get the milliseconds to sleep
+                long millis = (long)(remaining / NANO_SECONDS_PER_MILLISECOND);
+                
+                //take the remainder to get the nanoseconds
+                int nanos = (int)(((remaining / NANO_SECONDS_PER_MILLISECOND) - (double)millis) * NANO_SECONDS_PER_MILLISECOND);
+                
+                //sleep thread for the specified amount so each second maintains the same number of updates
+                Thread.sleep(millis, nanos);
             }
             catch(Exception e)
             {
@@ -205,25 +221,6 @@ public final class Main extends Thread implements Disposable
 
                 //no longer active thread
                 active = false;
-            }
-        }
-    }
-    
-    private void checkCount()
-    {
-        //if we are debugging and 1 second passed
-        if (Shared.DEBUG)
-        {
-            if (System.nanoTime() - time >= NANO_SECONDS_PER_SECOND)
-            {
-                //add 1 second to timer
-                time += NANO_SECONDS_PER_SECOND;
-
-                //display updates per second
-                System.out.println("UPS = " + updates);
-
-                //reset update counter
-                updates = 0;
             }
         }
     }

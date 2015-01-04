@@ -5,6 +5,7 @@ import com.gamesbykevin.rcproam.engine.Engine;
 import com.gamesbykevin.rcproam.map.Track;
 
 import com.gamesbykevin.framework.base.Cell;
+import com.gamesbykevin.rcproam.shared.Shared;
 
 import java.util.Random;
 
@@ -14,8 +15,12 @@ public final class Cpu extends Car
     private static final double ANGLE_WEST = 45;
     
     //the range of speed for a car, each cpu will have a different top speed
-    private static final double DEFAULT_SPEED_ROAD_MAX = DEFAULT_MAXIMUM_SPEED_ROAD * 1.1;
+    private static final double DEFAULT_SPEED_ROAD_MAX = DEFAULT_MAXIMUM_SPEED_ROAD * 1.2;
     private static final double DEFAULT_SPEED_ROAD_MIN = DEFAULT_MAXIMUM_SPEED_ROAD * .85;
+    
+    //the range of acceleration for a car, each cpu will have a different top speed
+    private static final double DEFAULT_ACCELERATE_SPEED_MAX = DEFAULT_ACCELERATE_SPEED * 1.2;
+    private static final double DEFAULT_ACCELERATE_SPEED_MIN = DEFAULT_ACCELERATE_SPEED * .85;
     
     //set the randomly picked max road speed
     private double defaultMaxRoadSpeed;
@@ -23,7 +28,7 @@ public final class Cpu extends Car
     //set the max speed allowed while turning
     private double defaultMaxTurnSpeed;
     
-    //the max turn speed will be a fraction of the max road speed
+    //the speed while turning will be a fraction of the max road speed
     private static final double TURN_SPEED_RATIO = .75;
     
     public Cpu(final Random random) throws Exception
@@ -33,17 +38,17 @@ public final class Cpu extends Car
         if (DEFAULT_SPEED_ROAD_MIN > DEFAULT_SPEED_ROAD_MAX)
             throw new Exception("The minimum road speed can't be greater than the maximum");
         
-        //cpu accelerate speed 
-        super.setAccelerateRate(Car.DEFAULT_ACCELERATE_SPEED);
-        
-        //pick a random max road speed for each cpu
-        final double speed = ((DEFAULT_SPEED_ROAD_MAX - DEFAULT_SPEED_ROAD_MIN) * random.nextDouble()) + DEFAULT_SPEED_ROAD_MIN;
+        //pick a random accelerate rate for each cpu
+        super.setAccelerateRate(((DEFAULT_ACCELERATE_SPEED_MAX - DEFAULT_ACCELERATE_SPEED_MIN) * random.nextDouble()) + DEFAULT_ACCELERATE_SPEED_MIN);
         
         //set the random max road speed
-        setDefaultMaxRoadSpeed(speed);
+        setDefaultMaxRoadSpeed(((DEFAULT_SPEED_ROAD_MAX - DEFAULT_SPEED_ROAD_MIN) * random.nextDouble()) + DEFAULT_SPEED_ROAD_MIN);
         
         //set the max speed allowed while turning
         setDefaultMaxTurnSpeed(getDefaultMaxRoadSpeed() * TURN_SPEED_RATIO);
+        
+        if (Shared.DEBUG)
+            System.out.println("Driving Speed = " + getDefaultMaxRoadSpeed());
         
         //set max driving speed since the cpu starts on a road
         super.setMaxRoadSpeed(getDefaultMaxRoadSpeed());
@@ -92,7 +97,7 @@ public final class Cpu extends Car
         final Track track = engine.getManager().getMaps().getMap().getTrack();
         
         //update basic elements for car: gravity, speed, race progress, etc...
-        updateBasicElements(track);
+        updateBasicElements(track, engine.getMain().getTime());
         
         //always accelerate, for now
         super.setAccelerate(true);

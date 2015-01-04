@@ -322,7 +322,7 @@ public final class Track implements Disposable
     }
     
     /**
-     * Is the specified location part of the road
+     * Is the specified location part of the road?
      * @param column
      * @param row
      * @return true if part of the road, false otherwise
@@ -330,6 +330,16 @@ public final class Track implements Disposable
     public boolean isRoad(final double column, final double row)
     {
         return isRoad((int)column, (int)row);
+    }
+    
+    /**
+     * Is the specified location part of the road?
+     * @param cell Location containing column, row
+     * @return true if part of the road, false otherwise
+     */
+    public boolean isRoad(final Cell cell)
+    {
+        return isRoad(cell.getCol(), cell.getRow());
     }
     
     /**

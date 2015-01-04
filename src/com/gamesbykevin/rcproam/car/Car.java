@@ -23,6 +23,12 @@ public abstract class Car extends Sprite implements Disposable, IElement
     //the angle the object should be facing in radians NOT degrees, the facing direction here is WEST
     private double angle = Math.toRadians(START_ANGLE);
     
+    //how many degrees is each turn between each 15 degree interval
+    private static final double TURN_STEP = 3.75;
+    
+    //each turn will be 15 degrees
+    protected static final double TURN_INTERVAL = 15;
+    
     //the number of turns needed to the next 15 degrees
     private int turnCount = (int)(TURN_INTERVAL / TURN_STEP);
     
@@ -33,16 +39,12 @@ public abstract class Car extends Sprite implements Disposable, IElement
     private boolean turnLeft = false;
     private boolean turnRight = false;
     private boolean accelerate = false;
-    private boolean attack = false;
+    
+    //do we render this car (if a car is not within the window there is no reason to render)
+    private boolean render = true;
     
     //is the car controlled by a human
     private final boolean human;
-    
-    //how many degrees is each turn between each 15 degree interval
-    private static final double TURN_STEP = 3.75;
-    
-    //each turn will be 15 degrees
-    protected static final double TURN_INTERVAL = 15;
     
     //the AI needs to be within a certain angle when moving to the next way point
     protected static final double AI_INTERVAL = (TURN_INTERVAL / 2);
@@ -88,6 +90,9 @@ public abstract class Car extends Sprite implements Disposable, IElement
     
     //object used to measure progress for a given race
     private TrackTracker tracker;
+    
+    //the name of this car
+    private String name;
     
     public enum Direction
     {
@@ -157,6 +162,16 @@ public abstract class Car extends Sprite implements Disposable, IElement
         this.tracker = new TrackTracker();
     }
     
+    public void setName(final String name)
+    {
+        this.name = name;
+    }
+    
+    public String getName()
+    {
+        return this.name;
+    }
+    
     /**
      * Get the track tracker
      * @return The object representing the progress for this car in a race
@@ -173,6 +188,24 @@ public abstract class Car extends Sprite implements Disposable, IElement
     public boolean isHuman()
     {
         return this.human;
+    }
+    
+    /**
+     * Do we render this car?
+     * @return true if yes, false otherwise
+     */
+    protected boolean hasRender()
+    {
+        return this.render;
+    }
+    
+    /**
+     * Set this car to be drawn on screen.
+     * @param render true if yes, false otherwise
+     */
+    protected void setRender(final boolean render)
+    {
+        this.render = render;
     }
     
     protected void setTurnLeft(final boolean turnLeft)
@@ -213,16 +246,6 @@ public abstract class Car extends Sprite implements Disposable, IElement
         }
     }
     
-    protected void setAttack(final boolean attack)
-    {
-        this.attack = attack;
-    }
-    
-    protected boolean isAttacking()
-    {
-        return this.attack;
-    }
-    
     /**
      * Assign car color which will be shown on mini map
      * @param carColor The desired car color
@@ -232,7 +255,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
         this.carColor = carColor;
     }
     
-    private Color getCarColor()
+    protected Color getCarColor()
     {
         return this.carColor;
     }
@@ -581,8 +604,8 @@ public abstract class Car extends Sprite implements Disposable, IElement
      */
     private void setMaxSpeed(final Track track)
     {
-        //set the maximum speed depending on where the car is
-        if (track.isRoad(getCol(), getRow()))
+        //set the maximum speed depending on the location of the car
+        if (track.isRoad(this))
         {
             setMaxSpeed(getMaxRoadSpeed());
         }
@@ -599,11 +622,22 @@ public abstract class Car extends Sprite implements Disposable, IElement
      * 3. Basic turning functions<br>
      * 4. Manage track progress for this car in a race
      * @param track The current track in play
+     * @param time The number of nanoseconds per update
      */
-    protected void updateBasicElements(final Track track)
+    protected void updateBasicElements(final Track track, final long time)
     {
         //update location on mini-map
         updateMiniMapLocation();
+        
+        //make sure the car stays within the track boundary
+        if (getCol() < 0)
+            super.setCol(0);
+        if (getCol() >= track.getColumns())
+            super.setCol(track.getColumns() - 1);
+        if (getRow() < 0)
+            super.setRow(0);
+        if (getRow() >= track.getRows())
+            super.setRow(track.getRows() - 1);
         
         //set maximum speed based on car location
         setMaxSpeed(track);
@@ -628,7 +662,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
         }
         
         //manage the race progress for this car
-        getTracker().updateProgress(track, this);
+        getTracker().updateProgress(track, this, time);
     }
     
     /**
@@ -686,14 +720,5 @@ public abstract class Car extends Sprite implements Disposable, IElement
     {
         //draw car animation
         super.draw(graphics);
-    }
-    
-    protected void renderMapLocation(final Graphics graphics, final int startX, final int startY)
-    {
-        if (getCarColor() != null)
-        {
-            graphics.setColor(getCarColor());
-            graphics.drawRect(startX + (int)(getCol()), startY + (int)(getRow()), 1, 1);
-        }
     }
 }

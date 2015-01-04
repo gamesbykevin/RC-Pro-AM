@@ -23,8 +23,8 @@ public final class StaticMap extends Sprite implements Disposable
     private int laps;
     
     //the size of the mini-map
-    private static final int PIXEL_WIDTH_SMALL_MAP = 84;
-    private static final int PIXEL_HEIGHT_SMALL_MAP = 50;
+    protected static final int PIXEL_WIDTH_SMALL_MAP = 84;
+    protected static final int PIXEL_HEIGHT_SMALL_MAP = 50;
     
     //the dimensions of an isometric tile
     private static final double ISOMETRIC_TILE_WIDTH = 32;
@@ -79,7 +79,7 @@ public final class StaticMap extends Sprite implements Disposable
      * Get the total number of laps required to complete the track
      * @return The total number of laps required to complete the track
      */
-    protected int getLaps()
+    public int getLaps()
     {
         return this.laps;
     }
@@ -297,10 +297,8 @@ public final class StaticMap extends Sprite implements Disposable
     /**
      * Render the mini-map of this track
      * @param graphics Graphics object
-     * @param startX x-coordinate where we want to draw the mini-map
-     * @param startY y-coordinate where we want to draw the mini-map
      */
-    protected void renderMiniMap(final Graphics graphics, final int startX, final int startY)
+    protected void renderMiniMap(final Graphics graphics)
     {
         for (int row = 0; row < getTrack().getRows(); row++)
         {
@@ -310,13 +308,13 @@ public final class StaticMap extends Sprite implements Disposable
                 {
                     //if true, then this is part of the road
                     graphics.setColor(Track.ROAD_COLOR);
-                    graphics.drawRect(startX + (col * getTrack().getWidth()), startY + (row * getTrack().getHeight()), getTrack().getWidth(), getTrack().getHeight());
+                    graphics.drawRect(col * getTrack().getWidth(), row * getTrack().getHeight(), getTrack().getWidth(), getTrack().getHeight());
                 }
                 else
                 {
                     //anything else is off the road
                     graphics.setColor(Track.OFF_ROAD_COLOR);
-                    graphics.drawRect(startX + (col * getTrack().getWidth()), startY + (row * getTrack().getHeight()), getTrack().getWidth(), getTrack().getHeight());
+                    graphics.drawRect(col * getTrack().getWidth(), row * getTrack().getHeight(), getTrack().getWidth(), getTrack().getHeight());
                 }
             }
         }

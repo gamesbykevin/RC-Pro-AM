@@ -33,12 +33,6 @@ public final class Manager implements IManager
     //the maps of the tracks
     private Maps maps;
     
-    //this timer will prevent the cars from racing for 5 seconds
-    private Timer timer;
-    
-    //the start delay is 5 seconds
-    private static final long START_DELAY = Timers.toNanoSeconds(5000L);
-    
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
      * @param engine Engine for our game that contains all objects needed
@@ -61,9 +55,6 @@ public final class Manager implements IManager
         
         //are we playing random Mode or Campaign
         //random = CustomMenu.Toggle.values()[engine.getMenu().getOptionSelectionIndex(CustomMenu.LayerKey.Options, CustomMenu.OptionKey.Mode)];
-        
-        //create new timer
-        this.timer = new Timer(START_DELAY);
     }
     
     @Override
@@ -75,25 +66,23 @@ public final class Manager implements IManager
             this.cars = new Cars();
             
             //add human car first
-            this.cars.addHuman(engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED);
-            //this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED,    engine.getRandom());
+            this.cars.addHuman(engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED, "Red");
             
             //set human in center of screen
             this.cars.getHuman().setLocation(engine.getMain().getScreen());
             
             //add cpu car(s)
-            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckBlue), Color.BLUE,    engine.getRandom());
-            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckGreen), Color.GREEN,  engine.getRandom());
-            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckOrange), Color.ORANGE,engine.getRandom());
+            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckBlue), Color.BLUE, "Blue", engine.getRandom());
+            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckGreen), Color.GREEN, "Green", engine.getRandom());
+            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckOrange), Color.ORANGE, "Orange", engine.getRandom());
         }
         
+        //reset cars
+        this.cars.reset();
+        
+        //create maps if it does not already exist
         if (this.maps == null)
-        {
             this.maps = new Maps(engine.getResources());
-        }
-        
-        //reset the timer
-        this.timer.reset();
     }
     
     public Cars getCars()
@@ -175,30 +164,16 @@ public final class Manager implements IManager
                     
                     //update map
                     maps.update(engine);
-                    
-                    //reset the race progress of the cars
-                    cars.resetCarProgress();
                 }
             }
             else
             {
-                //check if the time delay has passed for the race to start
-                if (timer.hasTimePassed())
-                {
-                    //update map first
-                    maps.update(engine);
-                    
-                    //now update the cars
-                    if (cars != null)
-                    {
-                        cars.update(engine);
-                    }
-                }
-                else
-                {
-                    //update the timer
-                    timer.update(engine.getMain().getTime());
-                }
+                //update map first
+                maps.update(engine);
+
+                //now update the cars
+                if (cars != null)
+                    cars.update(engine);
             }
         }
     }
@@ -222,21 +197,15 @@ public final class Manager implements IManager
                 //draw the map
                 maps.render(graphics);
             
+                //now draw the race cars
+                cars.render(graphics);
+                
                 //where the mini-map will be drawn
                 final int x = 0;
                 final int y = 0;
                 
-                //draw the mini-map
-                maps.renderMiniMap(graphics, x, y);
-
-                if (cars != null)
-                {
-                    //draw where the cars are on the mini-map
-                    cars.renderMiniMapLocations(graphics, x, y);
-                    
-                    //draw the race car
-                    cars.render(graphics);
-                }
+                //draw the mini-map with the cars on the map
+                maps.renderMiniMap(graphics, cars, x, y);
             }
         }
     }

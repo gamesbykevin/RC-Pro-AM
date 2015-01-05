@@ -7,7 +7,6 @@ import com.gamesbykevin.framework.resources.Disposable;
 
 import com.gamesbykevin.rcproam.engine.Engine;
 import com.gamesbykevin.rcproam.map.Track;
-import com.gamesbykevin.rcproam.map.TrackTracker;
 import com.gamesbykevin.rcproam.shared.IElement;
 import com.gamesbykevin.rcproam.shared.Shared;
 
@@ -23,14 +22,8 @@ public abstract class Car extends Sprite implements Disposable, IElement
     //the angle the object should be facing in radians NOT degrees, the facing direction here is WEST
     private double angle = Math.toRadians(START_ANGLE);
     
-    //how many degrees is each turn between each 15 degree interval
-    private static final double TURN_STEP = 3.75;
-    
     //each turn will be 15 degrees
     protected static final double TURN_INTERVAL = 15;
-    
-    //the number of turns needed to the next 15 degrees
-    private int turnCount = (int)(TURN_INTERVAL / TURN_STEP);
     
     //the current count
     private int count = 0;
@@ -49,50 +42,18 @@ public abstract class Car extends Sprite implements Disposable, IElement
     //the AI needs to be within a certain angle when moving to the next way point
     protected static final double AI_INTERVAL = (TURN_INTERVAL / 2);
     
-    //speed at which we are moving
-    private double speed = 0;
-    
-    //the current maximum speed allowed
-    private double maxSpeed = DEFAULT_MAXIMUM_SPEED_ROAD;
-    
-    //the maximum speed on and off the road
-    private double maxOffRoadSpeed = DEFAULT_MAXIMUM_SPEED_OFF_ROAD;
-    private double maxRoadSpeed = DEFAULT_MAXIMUM_SPEED_ROAD;
-    
-    //starting speed
-    protected static final double STARTING_SPEED = 0.0025;
-    
-    //maximum speed allowed while driving on the road
-    protected static final double DEFAULT_MAXIMUM_SPEED_ROAD = 0.0125;
-    
-    //maximum speed allowed while driving off road
-    private static final double DEFAULT_MAXIMUM_SPEED_OFF_ROAD = 0.00125;
-    
-    //the rate at which you accelerate to the maximum speed
-    protected static final double DEFAULT_ACCELERATE_SPEED = 0.00005;
-    
-    //speed at which we will accelerate
-    private double accelerateRate = DEFAULT_ACCELERATE_SPEED;
-    
-    //velocity slow down rate
-    private final double VELOCITY_DECELERATE = 0.9;
-    
-    //speed slow down rate
-    private final double SPEED_DECELERATE = 0.975;
-    
     //dimensions of car
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
     
-    //the velocity of the car moving on the mini-map
-    private double mapVelocityX = 0;
-    private double mapVelocityY = 0;
-    
     //object used to measure progress for a given race
-    private TrackTracker tracker;
+    private TrackProgress tracker;
     
     //the name of this car
     private String name;
+    
+    //the attributes of the car speed, accelerate, etc...
+    private Attributes attributes;
     
     public enum Direction
     {
@@ -111,16 +72,15 @@ public abstract class Car extends Sprite implements Disposable, IElement
      * @param human Is the car human
      * @throws Exception Exception will be thrown if the turn interval is not a multiple of the turn step
      */
-    protected Car(final boolean human) throws Exception
+    protected Car(final boolean human)
     {
         super();
         
         //is the car controlled by a human
         this.human = human;
-                
-        //the turn step must be a multiple of the turn interval
-        if (TURN_INTERVAL % TURN_STEP != 0)
-            throw new Exception("The turn step must be a multiple of the turn interval");
+        
+        //the cars attributes
+        this.attributes = new Attributes();
         
         //create sprite sheet
         super.createSpriteSheet();
@@ -159,7 +119,16 @@ public abstract class Car extends Sprite implements Disposable, IElement
         correctAnimation();
         
         //create new track tracker
-        this.tracker = new TrackTracker();
+        this.tracker = new TrackProgress();
+    }
+    
+    /**
+     * Get the cars attributes
+     * @return The attributes object containing speed/accelerate/etc...
+     */
+    public Attributes getAttributes()
+    {
+        return this.attributes;
     }
     
     public void setName(final String name)
@@ -176,7 +145,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
      * Get the track tracker
      * @return The object representing the progress for this car in a race
      */
-    public TrackTracker getTracker()
+    public TrackProgress getTracker()
     {
         return this.tracker;
     }
@@ -230,7 +199,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
     
     protected void turnLeft()
     {
-        if (count++ == turnCount)
+        if (count++ == getAttributes().getTurnCount())
         {
             turn(-Math.toRadians(TURN_INTERVAL));
             count = 0;
@@ -239,7 +208,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
     
     protected void turnRight()
     {
-        if (count++ == turnCount)
+        if (count++ == getAttributes().getTurnCount())
         {
             turn(Math.toRadians(TURN_INTERVAL));
             count = 0;
@@ -258,16 +227,6 @@ public abstract class Car extends Sprite implements Disposable, IElement
     protected Color getCarColor()
     {
         return this.carColor;
-    }
-    
-    protected void setAccelerateRate(final double accelerateRate)
-    {
-        this.accelerateRate = accelerateRate;
-    }
-    
-    protected double getAccelerateRate()
-    {
-        return this.accelerateRate;
     }
     
     protected final void addAnimation(final Direction direction, final int col, final int row)
@@ -326,53 +285,6 @@ public abstract class Car extends Sprite implements Disposable, IElement
         this.accelerate = accelerate;
     }
     
-    protected double getMaxRoadSpeed()
-    {
-        return this.maxRoadSpeed;
-    }
-    
-    /**
-     * Set the max speed allowed while driving on road
-     * @param maxRoadSpeed 
-     */
-    protected void setMaxRoadSpeed(final double maxRoadSpeed)
-    {
-        this.maxRoadSpeed = maxRoadSpeed;
-    }
-    
-    private double getMaxOffRoadSpeed()
-    {
-        return this.maxOffRoadSpeed;
-    }
-    
-    /**
-     * Get the current max speed allowed
-     * @return 
-     */
-    protected double getMaxSpeed()
-    {
-        return this.maxSpeed;
-    }
-
-    /**
-     * Set the current maximum speed
-     * @param maximumSpeed 
-     */
-    private void setMaxSpeed(final double maxSpeed)
-    {
-        this.maxSpeed = maxSpeed;
-    }
-    
-    protected double getSpeed()
-    {
-        return this.speed;
-    }
-    
-    protected void setSpeed(final double speed)
-    {
-        this.speed = speed;
-    }
-    
     /**
      * Determine the direction based on the existing velocity, facing angle and speed of car.
      */
@@ -382,28 +294,14 @@ public abstract class Car extends Sprite implements Disposable, IElement
         if (hasAccelerate())
         {
             //set the direction to head in
-            setVelocityX(getVelocityX() + (getSpeed() * Math.cos(getAngle())));
-            setVelocityY(getVelocityY() + (getSpeed() * Math.sin(getAngle())));
+            setVelocityX(getVelocityX() + (getAttributes().getSpeed() * Math.cos(getAngle())));
+            setVelocityY(getVelocityY() + (getAttributes().getSpeed() * Math.sin(getAngle())));
         }
         else
         {
             //if not accelerating slow down speed
-            setSpeed(getSpeed() * SPEED_DECELERATE);
+            getAttributes().setSpeed(getAttributes().getSpeed() * Attributes.SPEED_DECELERATE);
         }
-    }
-    
-    /**
-     * Slow down the speed of the car
-     */
-    private void applyGravity()
-    {
-        //slow down speed
-        setVelocityX(getVelocityX() * VELOCITY_DECELERATE);
-        setVelocityY(getVelocityY() * VELOCITY_DECELERATE);
-        
-        //also slow down speed on mini-map
-        this.mapVelocityX = (mapVelocityX * VELOCITY_DECELERATE);
-        this.mapVelocityY = (mapVelocityY * VELOCITY_DECELERATE);
     }
     
     @Override
@@ -562,58 +460,39 @@ public abstract class Car extends Sprite implements Disposable, IElement
     }
     
     /**
-     * Update the column, row for the mini-map
+     * Update the location of the car
+     * @param columns The number of columns in the current track, make sure we stay within bounds
+     * @param rows The number of columns in the current track, make sure we stay within bounds
      */
-    private void updateMiniMapLocation()
+    private void updateLocation(final int columns, final int rows)
     {
-        //store the angle
+        //store the angle which is used to display the correct animation on screen
         final double tmpAngle = getAngle();
-        
-        //assign the temp angle
-        setAngle(tmpAngle + Math.toRadians(135));
-        
-        //store the existing velocity
-        final double vx = this.getVelocityX();
-        final double vy = this.getVelocityY();
-        
-        //set the mini-map velocity
-        this.setVelocityX(this.mapVelocityX);
-        this.setVelocityY(this.mapVelocityY);
+    
+        //update the angle as it should be on mini-map
+        setAngle(getAngle() + Math.toRadians(135));
         
         //calculate velocity
         calculateVelocity();
         
-        //assign the new calculated map velocity
-        this.mapVelocityX = this.getVelocityX();
-        this.mapVelocityY = this.getVelocityY();
-        
         //update location on mini-map
-        super.setCol(getCol() + mapVelocityX);
-        super.setRow(getRow() + mapVelocityY);
+        super.setCol(getCol() + getVelocityX());
+        super.setRow(getRow() + getVelocityY());
         
-        //restore the velocity
-        this.setVelocity(vx, vy);
+        //make sure the car stays within the track boundary
+        if (getCol() < 0)
+            setCol(0);
+        if (getCol() >= columns)
+            setCol(columns - 1);
+        if (getRow() < 0)
+            setRow(0);
+        if (getRow() >= rows)
+            setRow(rows - 1);
         
         //restore facing angle
         this.setAngle(tmpAngle);
     }
     
-    /**
-     * Set the maximum speed depending on where the car is on the track
-     * @param track The track the car is racing on
-     */
-    private void setMaxSpeed(final Track track)
-    {
-        //set the maximum speed depending on the location of the car
-        if (track.isRoad(this))
-        {
-            setMaxSpeed(getMaxRoadSpeed());
-        }
-        else
-        {
-            setMaxSpeed(getMaxOffRoadSpeed());
-        }
-    }
     
     /**
      * Update basic elements of the car.<br>
@@ -626,30 +505,28 @@ public abstract class Car extends Sprite implements Disposable, IElement
      */
     protected void updateBasicElements(final Track track, final long time)
     {
-        //update location on mini-map
-        updateMiniMapLocation();
+        //update location of the car
+        updateLocation(track.getColumns(), track.getRows());
         
-        //make sure the car stays within the track boundary
-        if (getCol() < 0)
-            super.setCol(0);
-        if (getCol() >= track.getColumns())
-            super.setCol(track.getColumns() - 1);
-        if (getRow() < 0)
-            super.setRow(0);
-        if (getRow() >= track.getRows())
-            super.setRow(track.getRows() - 1);
+        if (hasAccelerate())
+        {
+            //apply gravity to slow down the velocity
+            setVelocityX(getVelocityX() * Attributes.VELOCITY_DECREASE_RATE);
+            setVelocityY(getVelocityY() * Attributes.VELOCITY_DECREASE_RATE);
+        }
+        else
+        {
+            //apply less gravity when not accelerating
+            setVelocityX(getVelocityX() * Attributes.VELOCITY_DECREASE_RATE_OTHER);
+            setVelocityY(getVelocityY() * Attributes.VELOCITY_DECREASE_RATE_OTHER);
+        }
         
         //set maximum speed based on car location
-        setMaxSpeed(track);
+        getAttributes().setMaxSpeed(track, this);
         
-        //calculate velocity
-        calculateVelocity();
-        
-        //apply gravity
-        applyGravity();
-        
-        //manage the speed of the car
-        manageSpeed();
+        //manage the speed of the car if accelerating
+        if (hasAccelerate())
+            getAttributes().checkSpeed();
         
         //manage direction turning
         if (isTurningRight())
@@ -672,24 +549,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
      */
     protected Cell getWayPointLocation(final Track track)
     {
-        return getTracker().getWayPointLocation(track);
-    }
-    
-    /**
-     * Manage the speed of the car.<br>
-     * If accelerating we will manage that to ensure it stays within the maximum limit
-     */
-    protected void manageSpeed()
-    {
-        if (hasAccelerate())
-        {
-            //accelerate speed
-            setSpeed(getSpeed() + getAccelerateRate());
-            
-            //make sure we don't go over the maximum speed, only when accelerating
-            if (getSpeed() > getMaxSpeed())
-                setSpeed(getMaxSpeed());
-        }
+        return getTracker().getCheckPointLocation(track);
     }
     
     /**

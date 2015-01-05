@@ -5,6 +5,7 @@ import com.gamesbykevin.framework.resources.Progress;
 
 import com.gamesbykevin.rcproam.car.Cars;
 import com.gamesbykevin.rcproam.engine.Engine;
+import com.gamesbykevin.rcproam.menu.CustomMenu;
 import com.gamesbykevin.rcproam.resources.GameImages;
 import com.gamesbykevin.rcproam.resources.Resources;
 import com.gamesbykevin.rcproam.shared.IElement;
@@ -45,7 +46,7 @@ public class Maps implements IElement, Disposable
     private Progress progress;
     
     //the range for the most/least amount of laps required to complete a race for a given map
-    private static final int MAX_LAPS = 5;
+    private static final int MAX_LAPS = 4;
     private static final int MIN_LAPS = 2;
     
     //image for the minimap
@@ -55,8 +56,8 @@ public class Maps implements IElement, Disposable
     private Graphics2D minimapGraphics;
     
     //the size of the minimap
-    private static final int MINIMAP_WIDTH = StaticMap.PIXEL_WIDTH_SMALL_MAP;
-    private static final int MINIMAP_HEIGHT = StaticMap.PIXEL_HEIGHT_SMALL_MAP;
+    public static final int MINIMAP_WIDTH = StaticMap.PIXEL_WIDTH_SMALL_MAP;
+    public static final int MINIMAP_HEIGHT = StaticMap.PIXEL_HEIGHT_SMALL_MAP;
     
     public Maps(final Resources resources)
     {
@@ -80,19 +81,6 @@ public class Maps implements IElement, Disposable
     public StaticMap getMap()
     {
         return maps.get(getIndex());
-    }
-    
-    /**
-     * Place the cars at the starting position of the current map
-     * @param car The car we want to place
-     * @throws Exception if there are no cars to place
-     */
-    public void placeCars(final Cars cars) throws Exception
-    {
-        if (cars.getSize() < 1)
-            throw new Exception("There are no cars to place");
-        
-        getMap().placeCars(cars);
     }
     
     /**
@@ -164,8 +152,8 @@ public class Maps implements IElement, Disposable
     }
     
     /**
-     * 
-     * @return 
+     * Are the maps loading
+     * @return true if so, false otherwise
      */
     public boolean isLoading()
     {
@@ -278,15 +266,31 @@ public class Maps implements IElement, Disposable
             
             //increase the progress
             progress.increase();
+            
+            //if the maps have now been created, set the map according to the menu setting
+            if (!isLoading())
+                setMap(engine, engine.getMenu().getOptionSelectionIndex(CustomMenu.LayerKey.Options, CustomMenu.OptionKey.Track));
         }
         else
         {
             //update the map location based on the human location
             getMap().updateLocation(engine.getManager().getCars().getHuman(), engine.getManager().getWindow());
-            
-            //adjust other cars from perspective of the human car
-            engine.getManager().getCars().adjustCarLocation(engine);
         }
+    }
+    
+    private void setMap(final Engine engine, final int index) throws Exception
+    {
+        //assign the current map
+        setIndex(index);
+        
+        //now place the cars at their starting location defined by the track
+        getMap().placeCars(engine.getManager().getCars());
+                    
+        //update the map location based on the human location
+        getMap().updateLocation(engine.getManager().getCars().getHuman(), engine.getManager().getWindow());
+        
+        //reset the cars as well
+        engine.getManager().getCars().reset();
     }
     
     @Override

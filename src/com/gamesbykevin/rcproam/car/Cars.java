@@ -50,10 +50,17 @@ public class Cars implements Disposable, IElement
         this.timer = new Timer(START_DELAY);
     }
     
+    /**
+     * Reset the race delay timer as well as the track progress for the cars.<br>
+     * Call this method when starting a new race
+     */
     public void reset()
     {
         //reset race delay timer
         this.timer.reset();
+        
+        //do not pause
+        this.pause = false;
         
         //reset track progress for the cars
         for (int i = 0; i < cars.size(); i++)
@@ -214,6 +221,9 @@ public class Cars implements Disposable, IElement
         }
         else
         {
+            //place the cars in perspective to the human racer
+            adjustCarLocation(engine);
+            
             if (!timer.hasTimePassed())
             {
                 //update timer
@@ -229,6 +239,9 @@ public class Cars implements Disposable, IElement
 
             //did at least 1 car complete a lap
             boolean lapCompleted = false;
+            
+            //has at least 1 car collided with another
+            boolean collision = false;
             
             for (int i = 0; i < cars.size(); i++)
             {
@@ -247,6 +260,10 @@ public class Cars implements Disposable, IElement
                 //if we have collision
                 if (hasCollision(car))
                 {
+                    //only flag collisions that are rendered on screen
+                    if (car.hasRender())
+                        collision = true;
+                    
                     //move the car back to the previous place
                     car.setCol(col);
                     car.setRow(row);
@@ -272,22 +289,30 @@ public class Cars implements Disposable, IElement
                     }
                     else
                     {
-                        //a car has completed a lap
-                        lapCompleted = true;
+                        //verify the car is drawn on screen before we play the lap completed sound effect
+                        if (car.hasRender())
+                        {
+                            //a car has completed a lap
+                            lapCompleted = true;
+                        }
                     }
 
                     if (Shared.DEBUG)
                         System.out.println("Lap " + car.getTracker().getLaps() + " of " + required + " (Car - " + car.getName() + ")");
 
-                    //we have a winner exit loop
+                    //we have a winner exit method
                     if (pause)
-                        break;
-                    
-                    //if a car completed a lap play sound effect
-                    if (lapCompleted)
-                        engine.getResources().playGameAudio(GameAudio.Keys.Lap);
+                        return;
                 }
             }
+            
+            //if a car completed a lap play sound effect
+            if (lapCompleted)
+                engine.getResources().playGameAudio(GameAudio.Keys.Lap);
+            
+            //if collision honk car horn
+            if (collision)
+                engine.getResources().playGameAudio(GameAudio.Keys.Horn);
         }
     }
     
@@ -322,7 +347,7 @@ public class Cars implements Disposable, IElement
      * @param engine Object containing all game elements
      * @throws Exception If there is no human car an exception will be thrown
      */
-    public void adjustCarLocation(final Engine engine) throws Exception
+    private void adjustCarLocation(final Engine engine) throws Exception
     {
         //the current map used
         final StaticMap map = engine.getManager().getMaps().getMap();
@@ -350,10 +375,10 @@ public class Cars implements Disposable, IElement
                 //now set the x,y based on the difference from the human
                 car.setX(car.getX() + (humanX - x));
                 car.setY(car.getY() + (humanY - y));
-                
-                //we only want to draw the car if it is on the screen
-                car.setRender(screen.contains(car.getX(), car.getY()));
             }
+            
+            //we only want to draw the car if it is on the screen
+            car.setRender(screen.contains(car.getX(), car.getY()));
         }
     }
     
@@ -361,11 +386,12 @@ public class Cars implements Disposable, IElement
     public void render(final Graphics graphics)
     {
         //first order the cars to be rendered in the appropriate order
-        sortCars();
+        sortCarLocation();
 
         //then draw the cars
         for (int i = 0; i < cars.size(); i++)
         {
+            //only draw the cars that are on the screen, otherwise it is pointless
             if (cars.get(i).hasRender())
                 cars.get(i).render(graphics);
         }
@@ -374,7 +400,7 @@ public class Cars implements Disposable, IElement
     /**
      * Sort the cars based on column, row so they are rendered appropriately in isometric fashion
      */
-    private void sortCars()
+    private void sortCarLocation()
     {
         //were objects swapped
         boolean swapped = true;
@@ -408,6 +434,42 @@ public class Cars implements Disposable, IElement
     }
     
     /**
+     * Sort the cars so we know what place they are in 1st, 2nd, 3rd, etc.....
+     */
+    private void sortCarRank()
+    {
+        //were objects swapped
+        boolean swapped = true;
+        int j = 0;
+        Car tmp;
+        
+        //continue as long as objects have been swapped
+        while (swapped) 
+        {
+            swapped = false;
+            j++;
+            
+            for (int i = 0; i < cars.size() - j; i++) 
+            {
+                Car car1 = cars.get(i);
+                Car car2 = cars.get(i + 1);
+                if (car2.getTracker().getRaceProgress() > car1.getTracker().getRaceProgress())
+                {
+                    //get temp car object
+                    tmp = cars.get(i);
+                    
+                    //swap objects
+                    cars.set(i, cars.get(i + 1));
+                    cars.set(i + 1, tmp);
+                    
+                    //flag that objects are swapped
+                    swapped = true;
+                }
+            }
+        }
+    }
+    
+    /**
      * Draw the cars on the mini-map
      * @param graphics 
      */
@@ -423,6 +485,43 @@ public class Cars implements Disposable, IElement
             
             //draw the color as a 1 x 1 pixel
             graphics.drawRect((int)car.getCol(), (int)car.getRow(), 1, 1);
+        }
+    }
+    
+    /**
+     * Draw the human time as well as the rank of the cars 1st, 2nd, etc...
+     * @param graphics
+     * @param x starting x-coordinate
+     * @param y starting y-coordinate
+     */
+    public void renderTimeInfo(final Graphics graphics, final int x, final int y, final int laps)
+    {
+        try
+        {
+            getHuman().getTracker().renderLapDescription(graphics, x, y, laps);
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+    
+    public void renderLeaderboard(final Graphics graphics, final int x, final int y)
+    {
+        //sort the cars by rank
+        sortCarRank();
+        
+        //the color of the text is white
+        graphics.setColor(Color.WHITE);
+        
+        //get the font height
+        final int fontHeight = graphics.getFontMetrics().getHeight();
+        
+        graphics.drawString("Leaderboard:", x, y);
+        
+        for (int i = 0; i < cars.size(); i++)
+        {
+            graphics.drawString((i+1) + " - " + cars.get(i).getName(), x, y + (fontHeight * (i+1)));
         }
     }
 }

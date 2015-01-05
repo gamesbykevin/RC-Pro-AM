@@ -23,7 +23,7 @@ public final class Track implements Disposable
     protected static final Color OFF_ROAD_COLOR = Color.GREEN.darker();
     
     //the check points in the track located at each turn
-    private List<Cell> wayPoints;
+    private List<Cell> checkPoints;
     
     /**
      * Create a new track of the specified dimensions
@@ -43,7 +43,7 @@ public final class Track implements Disposable
         this.key = new Tile[rows][columns];
         
         //create a new list for the way pojnts
-        this.wayPoints = new ArrayList<>();
+        this.checkPoints = new ArrayList<>();
     }
     
     /**
@@ -51,9 +51,9 @@ public final class Track implements Disposable
      * @param col Column
      * @param row Row
      */
-    private void addWayPoint(final double col, final double row)
+    private void addCheckPoint(final double col, final double row)
     {
-        this.wayPoints.add(new Cell(col, row));
+        this.checkPoints.add(new Cell(col, row));
     }
     
     /**
@@ -61,9 +61,18 @@ public final class Track implements Disposable
      * @param target
      * @return The location of the specified way point
      */
-    public Cell getWayPoint(final int target)
+    public Cell getCheckPoint(final int target)
     {
-        return this.wayPoints.get(target);
+        return this.checkPoints.get(target);
+    }
+    
+    /**
+     * Get the number of check points
+     * @return The total number of check points for this track
+     */
+    public int getCheckPointCount()
+    {
+        return this.checkPoints.size();
     }
     
     /**
@@ -72,9 +81,9 @@ public final class Track implements Disposable
      * @param target The way point we want to check
      * @return true if it is the final way point, false otherwise
      */
-    public boolean isFinalWayPoint(final int target)
+    public boolean isFinalCheckPoint(final int target)
     {
-        return (target >= this.wayPoints.size() - 1);
+        return (target >= this.checkPoints.size() - 1);
     }
     
     /**
@@ -88,173 +97,173 @@ public final class Track implements Disposable
         switch (trackNo)
         {
             case Maps.TRACK_01:
-                addWayPoint(30, 33.5);
-                addWayPoint(26.5, 32);
-                addWayPoint(25.5, 30);
-                addWayPoint(25.5, 13);
-                addWayPoint(27, 10);
-                addWayPoint(30, 9.5);
-                addWayPoint(38, 9.5);
-                addWayPoint(41.5, 13);
-                addWayPoint(45, 17.5);
-                addWayPoint(54, 17.5);
-                addWayPoint(57, 19.5);
-                addWayPoint(57.5, 22);
-                addWayPoint(57.5, 30);
-                addWayPoint(55, 33.5);
+                addCheckPoint(30, 33.5);
+                addCheckPoint(26.5, 32);
+                addCheckPoint(25.5, 30);
+                addCheckPoint(25.5, 13);
+                addCheckPoint(27, 10);
+                addCheckPoint(30, 9.5);
+                addCheckPoint(38, 9.5);
+                addCheckPoint(41.5, 13);
+                addCheckPoint(45, 17.5);
+                addCheckPoint(54, 17.5);
+                addCheckPoint(57, 19.5);
+                addCheckPoint(57.5, 22);
+                addCheckPoint(57.5, 30);
+                addCheckPoint(55, 33.5);
                 
                 //this is the finish line
-                addWayPoint(47, 33.5);
+                addCheckPoint(47, 33.5);
                 break;
 
             case Maps.TRACK_02:
-                addWayPoint(37, 25);
-                addWayPoint(33.5, 29);
-                addWayPoint(30, 34);
-                addWayPoint(26.5, 32);
-                addWayPoint(26.5, 21);
-                addWayPoint(28, 17.5);
-                addWayPoint(46, 17.5);
-                addWayPoint(49.5, 14);
-                addWayPoint(53, 9);
-                addWayPoint(57, 11);
-                addWayPoint(58, 22);
-                addWayPoint(56, 25);
+                addCheckPoint(37, 25);
+                addCheckPoint(33.5, 29);
+                addCheckPoint(30, 34);
+                addCheckPoint(26.5, 32);
+                addCheckPoint(26.5, 21);
+                addCheckPoint(28, 17.5);
+                addCheckPoint(46, 17.5);
+                addCheckPoint(49.5, 14);
+                addCheckPoint(53, 9);
+                addCheckPoint(57, 11);
+                addCheckPoint(58, 22);
+                addCheckPoint(56, 25);
                 
                 //this is the finish line
-                addWayPoint(47, 25.5);
+                addCheckPoint(47, 25.5);
                 break;
 
             case Maps.TRACK_03:
-                addWayPoint(37, 33.5);
-                addWayPoint(33.5, 30);
-                addWayPoint(30, 25.5);
-                addWayPoint(20, 25.5);
-                addWayPoint(17.5, 21);
-                addWayPoint(21, 17.5);
-                addWayPoint(54, 17.5);
-                addWayPoint(57.5, 14);
-                addWayPoint(61, 9);
-                addWayPoint(65, 11);
-                addWayPoint(66, 14);
-                addWayPoint(66, 22);
-                addWayPoint(63, 25);
-                addWayPoint(59, 27);
-                addWayPoint(55, 33.5);
+                addCheckPoint(37, 33.5);
+                addCheckPoint(33.5, 30);
+                addCheckPoint(30, 25.5);
+                addCheckPoint(20, 25.5);
+                addCheckPoint(17.5, 21);
+                addCheckPoint(21, 17.5);
+                addCheckPoint(54, 17.5);
+                addCheckPoint(57.5, 14);
+                addCheckPoint(61, 9);
+                addCheckPoint(65, 11);
+                addCheckPoint(66, 14);
+                addCheckPoint(66, 22);
+                addCheckPoint(63, 25);
+                addCheckPoint(59, 27);
+                addCheckPoint(55, 33.5);
                 
                 //this is the finish line
-                addWayPoint(47, 33.5);
+                addCheckPoint(47, 33.5);
                 break;
 
             case Maps.TRACK_04:
-                addWayPoint(30, 33.5);
-                addWayPoint(25.5, 30);
-                addWayPoint(25.5, 21);
-                addWayPoint(29, 17.5);
-                addWayPoint(38, 17.5);
-                addWayPoint(41.5, 21);
-                addWayPoint(44, 25);
-                addWayPoint(49, 25);
-                addWayPoint(49, 13);
-                addWayPoint(53, 9);
-                addWayPoint(57, 12);
-                addWayPoint(57, 30);
-                addWayPoint(54, 33.5);
+                addCheckPoint(30, 33.5);
+                addCheckPoint(25.5, 30);
+                addCheckPoint(25.5, 21);
+                addCheckPoint(29, 17.5);
+                addCheckPoint(38, 17.5);
+                addCheckPoint(41.5, 21);
+                addCheckPoint(44, 25);
+                addCheckPoint(49, 25);
+                addCheckPoint(49, 13);
+                addCheckPoint(53, 9);
+                addCheckPoint(57, 12);
+                addCheckPoint(57, 30);
+                addCheckPoint(54, 33.5);
                 
                 //this is the finish line
-                addWayPoint(39, 33.5);
+                addCheckPoint(39, 33.5);
                 break;
 
             case Maps.TRACK_05:
-                addWayPoint(13, 26);
-                addWayPoint(9, 22);
-                addWayPoint(9, 13);
-                addWayPoint(13, 9);
-                addWayPoint(22, 9);
-                addWayPoint(26, 12);
-                addWayPoint(28, 17.5);
-                addWayPoint(70, 17.5);
-                addWayPoint(73.5, 20);
-                addWayPoint(73.5, 30);
-                addWayPoint(70, 33.5);
-                addWayPoint(61, 33.5);
-                addWayPoint(57.5, 31);
-                addWayPoint(57.5, 26);
+                addCheckPoint(13, 26);
+                addCheckPoint(9, 22);
+                addCheckPoint(9, 13);
+                addCheckPoint(13, 9);
+                addCheckPoint(22, 9);
+                addCheckPoint(26, 12);
+                addCheckPoint(28, 17.5);
+                addCheckPoint(70, 17.5);
+                addCheckPoint(73.5, 20);
+                addCheckPoint(73.5, 30);
+                addCheckPoint(70, 33.5);
+                addCheckPoint(61, 33.5);
+                addCheckPoint(57.5, 31);
+                addCheckPoint(57.5, 26);
                 
                 //this is the finish line
-                addWayPoint(39, 25.5);
+                addCheckPoint(39, 25.5);
                 break;
 
             case Maps.TRACK_06:
-                addWayPoint(13, 33.5);
-                addWayPoint(9.5, 30);
-                addWayPoint(13, 25.5);
-                addWayPoint(23, 25.5);
-                addWayPoint(26.5, 21);
-                addWayPoint(22, 17.5);
-                addWayPoint(13, 17.5);
-                addWayPoint(9.5, 13);
-                addWayPoint(13, 9.5);
-                addWayPoint(30, 9.5);
-                addWayPoint(34, 13);
-                addWayPoint(34, 23);
-                addWayPoint(38, 25.5);
-                addWayPoint(62, 25.5);
-                addWayPoint(66, 22);
-                addWayPoint(69, 17);
-                addWayPoint(73.5, 20);
-                addWayPoint(73.5, 30);
-                addWayPoint(70, 33.5);
+                addCheckPoint(13, 33.5);
+                addCheckPoint(9.5, 30);
+                addCheckPoint(13, 25.5);
+                addCheckPoint(23, 25.5);
+                addCheckPoint(26.5, 21);
+                addCheckPoint(22, 17.5);
+                addCheckPoint(13, 17.5);
+                addCheckPoint(9.5, 13);
+                addCheckPoint(13, 9.5);
+                addCheckPoint(30, 9.5);
+                addCheckPoint(34, 13);
+                addCheckPoint(34, 23);
+                addCheckPoint(38, 25.5);
+                addCheckPoint(62, 25.5);
+                addCheckPoint(66, 22);
+                addCheckPoint(69, 17);
+                addCheckPoint(73.5, 20);
+                addCheckPoint(73.5, 30);
+                addCheckPoint(70, 33.5);
                 
                 //this is the finish line
-                addWayPoint(23, 33.5);
+                addCheckPoint(23, 33.5);
                 break;
 
             case Maps.TRACK_07:
-                addWayPoint(13, 33.5);
-                addWayPoint(9.5, 30);
-                addWayPoint(9.5, 13);
-                addWayPoint(13, 9.5);
-                addWayPoint(17, 12);
-                addWayPoint(21, 17);
-                addWayPoint(26, 14);
-                addWayPoint(29, 9.5);
-                addWayPoint(71, 9.5);
-                addWayPoint(74, 13);
-                addWayPoint(70, 18);
-                addWayPoint(60, 18);
-                addWayPoint(57, 22);
-                addWayPoint(54, 26);
-                addWayPoint(45, 26);
-                addWayPoint(41, 29);
-                addWayPoint(38, 33.5);
+                addCheckPoint(13, 33.5);
+                addCheckPoint(9.5, 30);
+                addCheckPoint(9.5, 13);
+                addCheckPoint(13, 9.5);
+                addCheckPoint(17, 12);
+                addCheckPoint(21, 17);
+                addCheckPoint(26, 14);
+                addCheckPoint(29, 9.5);
+                addCheckPoint(71, 9.5);
+                addCheckPoint(74, 13);
+                addCheckPoint(70, 18);
+                addCheckPoint(60, 18);
+                addCheckPoint(57, 22);
+                addCheckPoint(54, 26);
+                addCheckPoint(45, 26);
+                addCheckPoint(41, 29);
+                addCheckPoint(38, 33.5);
                 
                 //this is the finish line
-                addWayPoint(23, 33.5);
+                addCheckPoint(23, 33.5);
                 break;
 
             case Maps.TRACK_08:
-                addWayPoint(45, 33.5);
-                addWayPoint(41.5, 30);
-                addWayPoint(41.5, 21);
-                addWayPoint(38, 17.5);
-                addWayPoint(34, 20);
-                addWayPoint(34, 30);
-                addWayPoint(30, 33.5);
-                addWayPoint(13, 33.5);
-                addWayPoint(9.5, 30);
-                addWayPoint(9.5, 13);
-                addWayPoint(13, 9.5);
-                addWayPoint(70, 9.5);
-                addWayPoint(74, 13);
-                addWayPoint(71, 18);
-                addWayPoint(65.5, 21);
-                addWayPoint(69, 26);
-                addWayPoint(74, 29);
-                addWayPoint(70, 33.5);
+                addCheckPoint(45, 33.5);
+                addCheckPoint(41.5, 30);
+                addCheckPoint(41.5, 21);
+                addCheckPoint(38, 17.5);
+                addCheckPoint(34, 20);
+                addCheckPoint(34, 30);
+                addCheckPoint(30, 33.5);
+                addCheckPoint(13, 33.5);
+                addCheckPoint(9.5, 30);
+                addCheckPoint(9.5, 13);
+                addCheckPoint(13, 9.5);
+                addCheckPoint(70, 9.5);
+                addCheckPoint(74, 13);
+                addCheckPoint(71, 18);
+                addCheckPoint(65.5, 21);
+                addCheckPoint(69, 26);
+                addCheckPoint(74, 29);
+                addCheckPoint(70, 33.5);
                 
                 //this is the finish line
-                addWayPoint(55, 33.5);
+                addCheckPoint(55, 33.5);
                 break;
 
             default:
@@ -380,15 +389,15 @@ public final class Track implements Disposable
     {
         this.key = null;
         
-        if (wayPoints != null)
+        if (checkPoints != null)
         {
-            for (int i = 0; i < wayPoints.size(); i++)
+            for (int i = 0; i < checkPoints.size(); i++)
             {
-                wayPoints.set(i, null);
+                checkPoints.set(i, null);
             }
             
-            wayPoints.clear();
-            wayPoints = null;
+            checkPoints.clear();
+            checkPoints = null;
         }
     }
 }

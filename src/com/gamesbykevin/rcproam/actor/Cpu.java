@@ -1,5 +1,6 @@
 package com.gamesbykevin.rcproam.actor;
 
+import com.gamesbykevin.rcproam.car.Attributes;
 import com.gamesbykevin.rcproam.car.Car;
 import com.gamesbykevin.rcproam.engine.Engine;
 import com.gamesbykevin.rcproam.map.Track;
@@ -15,12 +16,12 @@ public final class Cpu extends Car
     private static final double ANGLE_WEST = 45;
     
     //the range of speed for a car, each cpu will have a different top speed
-    private static final double DEFAULT_SPEED_ROAD_MAX = DEFAULT_MAXIMUM_SPEED_ROAD * 1.2;
-    private static final double DEFAULT_SPEED_ROAD_MIN = DEFAULT_MAXIMUM_SPEED_ROAD * .85;
+    private static final double DEFAULT_SPEED_ROAD_MAX = Attributes.DEFAULT_MAXIMUM_SPEED_ROAD * 1.25;
+    private static final double DEFAULT_SPEED_ROAD_MIN = Attributes.DEFAULT_MAXIMUM_SPEED_ROAD * .75;
     
     //the range of acceleration for a car, each cpu will have a different top speed
-    private static final double DEFAULT_ACCELERATE_SPEED_MAX = DEFAULT_ACCELERATE_SPEED * 1.2;
-    private static final double DEFAULT_ACCELERATE_SPEED_MIN = DEFAULT_ACCELERATE_SPEED * .85;
+    private static final double DEFAULT_ACCELERATE_SPEED_MAX = Attributes.DEFAULT_ACCELERATE_SPEED * 1.25;
+    private static final double DEFAULT_ACCELERATE_SPEED_MIN = Attributes.DEFAULT_ACCELERATE_SPEED * .75;
     
     //set the randomly picked max road speed
     private double defaultMaxRoadSpeed;
@@ -31,15 +32,22 @@ public final class Cpu extends Car
     //the speed while turning will be a fraction of the max road speed
     private static final double TURN_SPEED_RATIO = .75;
     
+    //the optional amount of updates required to perform a 15 degree turn (must be a multiple of 2)
+    private static int[] TURN_COUNT_OPTIONS = {2, 4, 6, 8};
+    
     public Cpu(final Random random) throws Exception
     {
         super(false);
         
+        //make sure the minimum speed does not exceed the max
         if (DEFAULT_SPEED_ROAD_MIN > DEFAULT_SPEED_ROAD_MAX)
             throw new Exception("The minimum road speed can't be greater than the maximum");
         
+        //set the amount of updates required to turn the car 15 degrees
+        getAttributes().setTurnCount(TURN_COUNT_OPTIONS[random.nextInt(TURN_COUNT_OPTIONS.length)]);
+        
         //pick a random accelerate rate for each cpu
-        super.setAccelerateRate(((DEFAULT_ACCELERATE_SPEED_MAX - DEFAULT_ACCELERATE_SPEED_MIN) * random.nextDouble()) + DEFAULT_ACCELERATE_SPEED_MIN);
+        getAttributes().setAccelerateRate(((DEFAULT_ACCELERATE_SPEED_MAX - DEFAULT_ACCELERATE_SPEED_MIN) * random.nextDouble()) + DEFAULT_ACCELERATE_SPEED_MIN);
         
         //set the random max road speed
         setDefaultMaxRoadSpeed(((DEFAULT_SPEED_ROAD_MAX - DEFAULT_SPEED_ROAD_MIN) * random.nextDouble()) + DEFAULT_SPEED_ROAD_MIN);
@@ -47,11 +55,8 @@ public final class Cpu extends Car
         //set the max speed allowed while turning
         setDefaultMaxTurnSpeed(getDefaultMaxRoadSpeed() * TURN_SPEED_RATIO);
         
-        if (Shared.DEBUG)
-            System.out.println("Driving Speed = " + getDefaultMaxRoadSpeed());
-        
         //set max driving speed since the cpu starts on a road
-        super.setMaxRoadSpeed(getDefaultMaxRoadSpeed());
+        getAttributes().setMaxRoadSpeed(getDefaultMaxRoadSpeed());
     }
     
     /**
@@ -118,7 +123,7 @@ public final class Cpu extends Car
         if (difference >= Car.AI_INTERVAL)
         {
             //set max speed while we are turning
-            setMaxRoadSpeed(getDefaultMaxTurnSpeed());
+            getAttributes().setMaxRoadSpeed(getDefaultMaxTurnSpeed());
             
             //now perform turn
             performTurn(degrees, destination);
@@ -130,7 +135,7 @@ public final class Cpu extends Car
             setTurnLeft(false);
             
             //set max speed
-            setMaxRoadSpeed(getDefaultMaxRoadSpeed());
+            getAttributes().setMaxRoadSpeed(getDefaultMaxRoadSpeed());
         }
     }
     

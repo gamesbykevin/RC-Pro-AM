@@ -42,7 +42,7 @@ public final class Engine implements KeyListener, MouseMotionListener, MouseList
     private final long seed = System.nanoTime();
     
     //the game font size
-    private static final float GAME_FONT_SIZE = 28f;
+    private static final float GAME_FONT_SIZE = 9f;
     
     /**
      * The Engine that contains the game/menu objects

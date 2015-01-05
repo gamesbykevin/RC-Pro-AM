@@ -33,6 +33,10 @@ public final class Manager implements IManager
     //the maps of the tracks
     private Maps maps;
     
+    //the size of the info screen at the bottom
+    private static final int INFO_WIDTH = 256;
+    private static final int INFO_HEIGHT = 64;
+    
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
      * @param engine Engine for our game that contains all objects needed
@@ -46,8 +50,14 @@ public final class Manager implements IManager
         //set the audio depending on menu setting
         engine.getResources().setAudioEnabled(enabled);
         
+        //the window available for gameplay
+        Rectangle screen = new Rectangle(engine.getMain().getScreen());
+        
+        //the height will be smaller
+        screen.height -= 64;
+        
         //set the game window where game play will occur
-        setWindow(engine.getMain().getScreen());
+        setWindow(screen);
         
         //maps = new Maps(engine.getResources().getGameImage(GameImages.Keys.Maps), getWindow());
         //hero.setImage(engine.getResources().getGameImage(GameImages.Keys.Heroes));
@@ -69,7 +79,7 @@ public final class Manager implements IManager
             this.cars.addHuman(engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED, "Red");
             
             //set human in center of screen
-            this.cars.getHuman().setLocation(engine.getMain().getScreen());
+            this.cars.getHuman().setLocation(getWindow());
             
             //add cpu car(s)
             this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckBlue), Color.BLUE, "Blue", engine.getRandom());
@@ -149,28 +159,12 @@ public final class Manager implements IManager
     {
         if (maps != null)
         {
-            if (maps.isLoading())
+            //update map first
+            maps.update(engine);
+            
+            //if no longer loading
+            if (!maps.isLoading())
             {
-                maps.update(engine);
-                
-                //if no longer loading, place car(s)
-                if (!maps.isLoading())
-                {
-                    //assign the track based on the option selection
-                    maps.setIndex(engine.getMenu().getOptionSelectionIndex(CustomMenu.LayerKey.Options, CustomMenu.OptionKey.Track));
-                    
-                    //place the cars at their starting location
-                    maps.placeCars(cars);
-                    
-                    //update map
-                    maps.update(engine);
-                }
-            }
-            else
-            {
-                //update map first
-                maps.update(engine);
-
                 //now update the cars
                 if (cars != null)
                     cars.update(engine);
@@ -200,12 +194,22 @@ public final class Manager implements IManager
                 //now draw the race cars
                 cars.render(graphics);
                 
+                //set background color for stats/info screen
+                graphics.setColor(Color.BLACK);
+                graphics.fillRect(getWindow().x, getWindow().y + getWindow().height, INFO_WIDTH, INFO_HEIGHT);
+                
                 //where the mini-map will be drawn
-                final int x = 0;
-                final int y = 0;
+                final int x = getWindow().x + (getWindow().width / 2) - (Maps.MINIMAP_WIDTH / 3);
+                final int y = getWindow().y + getWindow().height + (INFO_HEIGHT / 2) - (Maps.MINIMAP_HEIGHT / 2);
                 
                 //draw the mini-map with the cars on the map
                 maps.renderMiniMap(graphics, cars, x, y);
+                
+                //draw human car info
+                cars.renderTimeInfo(graphics, getWindow().x + 1, getWindow().y + getWindow().height + (INFO_HEIGHT / 5), maps.getMap().getLaps());
+                
+                //draw the leaderboard
+                cars.renderLeaderboard(graphics, x + (int)(Maps.MINIMAP_WIDTH * 1.1), getWindow().y + getWindow().height + (INFO_HEIGHT / 5));
             }
         }
     }

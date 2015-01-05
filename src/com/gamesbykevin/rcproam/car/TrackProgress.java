@@ -1,12 +1,13 @@
-package com.gamesbykevin.rcproam.map;
-
-import com.gamesbykevin.rcproam.car.Car;
+package com.gamesbykevin.rcproam.car;
 
 import com.gamesbykevin.framework.base.Cell;
 import com.gamesbykevin.framework.resources.Disposable;
 import com.gamesbykevin.framework.util.Timer;
 import com.gamesbykevin.framework.util.Timers;
+import com.gamesbykevin.rcproam.map.Track;
+import java.awt.Color;
 
+import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
  * This class will be used to determine who wins the race, and the car rank while the race is in progress
  * @author GOD
  */
-public class TrackTracker implements Disposable
+public class TrackProgress implements Disposable
 {
     //the maximum allowed distance from a way point to determine if we reached the way point for the cpu
     private static final double WAYPOINT_DISTANCE_CPU = 1.5;
@@ -26,6 +27,12 @@ public class TrackTracker implements Disposable
     //how many laps have been completed
     private int laps = 0;
 
+    //how many checkpoints have been completed (used to determine rank 1st, 2nd, 3rd, etc..)
+    private int checkPoints = 0;
+    
+    //how far we have traveled in the race
+    private double raceProgress = 0;
+    
     //the current way point a car are targeting
     private int target = 0;
 
@@ -35,7 +42,7 @@ public class TrackTracker implements Disposable
     //the text description of each lap
     private List<String> lapDescription;
     
-    public TrackTracker()
+    public TrackProgress()
     {
         //create new timer
         this.timer = new Timer();
@@ -60,7 +67,7 @@ public class TrackTracker implements Disposable
     }
     
     /**
-     * Update the race progress
+     * Update the tracking progress
      * @param track The track currently racing on
      * @param car The car we want to update progress for
      * @param time The number of nanoseconds per update
@@ -71,7 +78,7 @@ public class TrackTracker implements Disposable
         timer.update(time);
         
         //get the location of the current targeted way point
-        final Cell goal = getWayPointLocation(track);
+        final Cell goal = getCheckPointLocation(track);
         
         //get the distance from the way point
         double distance = Cell.getDistance(goal, car);
@@ -81,29 +88,29 @@ public class TrackTracker implements Disposable
             distance = -distance;
         
         //are we close enough to the way point
-        boolean hasWayPoint;
+        boolean hasCheckPoint;
         
         //check if we are close enough to the way point
         if (car.isHuman())
         {
-            hasWayPoint = (distance <= WAYPOINT_DISTANCE_HUMAN);
+            hasCheckPoint = (distance <= WAYPOINT_DISTANCE_HUMAN);
         }
         else
         {
-            hasWayPoint = (distance <= WAYPOINT_DISTANCE_CPU);
+            hasCheckPoint = (distance <= WAYPOINT_DISTANCE_CPU);
         }
         
         //if we are close enough to the way point
-        if (hasWayPoint)
+        if (hasCheckPoint)
         {
             //check if this is the way point for the finish line
-            if (track.isFinalWayPoint(getWayPointTarget()))
+            if (track.isFinalCheckPoint(getCheckPointTarget()))
             {
                 //if the car has past the way point goal (west is the default direction so car needs to be west of goal)
                 if (car.getCol() <= goal.getCol())
                 {
                     //reset the way point target back to the beginning
-                    resetWayPointTarget();
+                    resetCheckPointTarget();
 
                     //increase laps completed
                     addLap();
@@ -113,14 +120,23 @@ public class TrackTracker implements Disposable
                     
                     //reset timer
                     timer.reset();
+                    
+                    //check point has been completed, add to total
+                    this.checkPoints++;
                 }
             }
             else
             {
                 //progress to the next way point
-                setWayPointTarget(getWayPointTarget() + 1);
+                setCheckPointTarget(getCheckPointTarget() + 1);
+                
+                //check point has been completed, add to total
+                this.checkPoints++;
             }
         }
+        
+        //update the race progress
+        updateRaceProgress(track, car);
     }
     
     /**
@@ -128,9 +144,9 @@ public class TrackTracker implements Disposable
      * @param track The current track we are racing on
      * @return The location of the current way point
      */
-    public Cell getWayPointLocation(final Track track)
+    public Cell getCheckPointLocation(final Track track)
     {
-        return track.getWayPoint(getWayPointTarget());
+        return track.getCheckPoint(getCheckPointTarget());
     }
     
     /**
@@ -139,7 +155,7 @@ public class TrackTracker implements Disposable
     public final void reset()
     {
         //reset the current way point targeted
-        resetWayPointTarget();
+        resetCheckPointTarget();
         
         //reset the number of laps completed
         resetLaps();
@@ -149,13 +165,19 @@ public class TrackTracker implements Disposable
         
         //clear list of lap descriptions
         lapDescription.clear();
+        
+        //reset checkpoints completed back to 0
+        checkPoints = 0;
+        
+        //reset race completion progress
+        raceProgress = 0;
     }
     
     /**
      * Get the target
      * @return The current way point we are targeting
      */
-    public int getWayPointTarget()
+    public int getCheckPointTarget()
     {
         return this.target;
     }
@@ -164,7 +186,7 @@ public class TrackTracker implements Disposable
      * Set the target
      * @param target The way point we want to target
      */
-    public void setWayPointTarget(final int target)
+    public void setCheckPointTarget(final int target)
     {
         this.target = target;
     }
@@ -172,9 +194,9 @@ public class TrackTracker implements Disposable
     /**
      * Start back at the first target
      */
-    public void resetWayPointTarget()
+    public void resetCheckPointTarget()
     {
-        setWayPointTarget(0);
+        setCheckPointTarget(0);
     }
     
     /**
@@ -200,5 +222,77 @@ public class TrackTracker implements Disposable
     public void addLap()
     {
         this.laps++;
+    }
+    
+    /**
+     * Set the current progress of the race.<br>
+     * This method will be used to determine the rank of each car 1st, 2nd, 3rd, etc...
+     * @param track The current track we are racing on
+     * @param cell The current location of the car
+     */
+    private void updateRaceProgress(final Track track, final Cell carLocation)
+    {
+        //location of previous checkpoint
+        Cell previous = (getCheckPointTarget() <= 0) ? track.getCheckPoint(track.getCheckPointCount() - 1) : track.getCheckPoint(getCheckPointTarget() - 1);
+        
+        //location of current checkpoint
+        Cell current = track.getCheckPoint(getCheckPointTarget());
+        
+        //full distance between previous and current checkpoint
+        final double fullDistance = Cell.getDistance(previous, current);
+        
+        //the progress completed towards next check point
+        final double progressDistance = fullDistance - Cell.getDistance(carLocation, current);
+        
+        //return result which is the total # of completed checkpoints + the progress towards next checkpoint
+        this.raceProgress = (double)this.checkPoints + (double)(progressDistance / fullDistance);
+    }
+    
+    /**
+     * Get the race progress
+     * @return The total number of checkpoints completed for this race
+     */
+    public double getRaceProgress()
+    {
+        return this.raceProgress;
+    }
+    
+    public void renderLapDescription(final Graphics graphics, final int x, final int y, final int laps)
+    {
+        //text will be white
+        graphics.setColor(Color.WHITE);
+        
+        //get the font height
+        final int fontHeight = graphics.getFontMetrics().getHeight();
+        
+        //draw all lap times
+        for (int i = 0; i < laps; i++)
+        {
+            //empty description
+            final String emptyDesc = "Lap " + (i+1);
+            
+            //current time description
+            final String timedDesc = emptyDesc + " - " + timer.getDescPassed(Timers.FORMAT_6);
+            
+            //y-ccordinate to display info
+            final int drawY = y + (fontHeight * i);
+            
+            //if there are no descriptions we can only show current progress
+            if (lapDescription.isEmpty())
+            {
+                graphics.drawString((i == 0) ? timedDesc : emptyDesc, x, drawY);
+            }
+            else
+            {
+                if (i < lapDescription.size())
+                {
+                    graphics.drawString(lapDescription.get(i), x, drawY);
+                }
+                else
+                {
+                    graphics.drawString((i == lapDescription.size()) ? timedDesc : emptyDesc, x, drawY);
+                }
+            }
+        }
     }
 }

@@ -17,11 +17,11 @@ public final class Shared
      * NOTE: If these dimensions do not match the original then the mouse input will be off.
      */
     public static final int INITIAL_WIDTH  = 512;
-    public static final int INITIAL_HEIGHT = 384;
+    public static final int INITIAL_HEIGHT = 512;
     
     //the game is originally programmed for these dimensions
     public static final int ORIGINAL_WIDTH  = 256;
-    public static final int ORIGINAL_HEIGHT = 192;
+    public static final int ORIGINAL_HEIGHT = 256;
     
     //show UPS/FPS counters
     public static final boolean DEBUG = true;

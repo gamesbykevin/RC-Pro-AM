@@ -17,6 +17,7 @@ public final class GameImages extends ImageManager
     public enum Keys
     {
         TruckRed, TruckBlue, TruckOrange, TruckGreen,
+        SuvRed, SuvBlue, SuvOrange, SuvGreen,
         
         Track01, Track02, Track03, Track04, Track05, 
         Track06, Track07, Track08, 

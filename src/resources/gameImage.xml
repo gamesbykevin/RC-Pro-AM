@@ -3,10 +3,17 @@
     <!--
     <image id="Cursor">resources/images/game/cursor.gif</image>
     -->
+    
+    <image id="SuvRed">resources/images/game/cars/suvRed.gif</image>
+    <image id="SuvBlue">resources/images/game/cars/suvBlue.gif</image>
+    <image id="SuvGreen">resources/images/game/cars/suvGreen.gif</image>
+    <image id="SuvOrange">resources/images/game/cars/suvOrange.gif</image>
+    
     <image id="TruckRed">resources/images/game/cars/truckRed.gif</image>
     <image id="TruckBlue">resources/images/game/cars/truckBlue.gif</image>
     <image id="TruckGreen">resources/images/game/cars/truckGreen.gif</image>
     <image id="TruckOrange">resources/images/game/cars/truckOrange.gif</image>
+    
     <image id="Track01">resources/images/game/maps/RCProAmMapLevel01BG.png</image>
     <image id="Track02">resources/images/game/maps/RCProAmMapLevel02BG.png</image>
     <image id="Track03">resources/images/game/maps/RCProAmMapLevel03BG.png</image>

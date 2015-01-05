@@ -40,6 +40,10 @@ public final class Manager implements IManager
     private static final int INFO_WIDTH = 256;
     private static final int INFO_HEIGHT = 64;
     
+    //different car types
+    private static final int CAR_TYPE_TRUCK = 0;
+    private static final int CAR_TYPE_SUV = 1;
+    
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
      * @param engine Engine for our game that contains all objects needed
@@ -81,16 +85,32 @@ public final class Manager implements IManager
             //create new container for cars
             this.cars = new Cars();
             
-            //add human car first
-            this.cars.addHuman(engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED, "Red");
+            switch (engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.CarType))
+            {
+                case CAR_TYPE_SUV:
+                    //add human car first
+                    this.cars.addHuman(engine.getResources().getGameImage(GameImages.Keys.SuvRed), Color.RED, "Red");
+
+                    //add cpu car(s)
+                    this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.SuvBlue), Color.BLUE, "Blue", engine.getRandom());
+                    this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.SuvGreen), Color.GREEN, "Green", engine.getRandom());
+                    this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.SuvOrange), Color.ORANGE, "Orange", engine.getRandom());
+                    break;
+                    
+                default:
+                case CAR_TYPE_TRUCK:
+                    //add human car first
+                    this.cars.addHuman(engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED, "Red");
+
+                    //add cpu car(s)
+                    this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckBlue), Color.BLUE, "Blue", engine.getRandom());
+                    this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckGreen), Color.GREEN, "Green", engine.getRandom());
+                    this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckOrange), Color.ORANGE, "Orange", engine.getRandom());
+                    break;
+            }
             
             //set human in center of screen
             this.cars.getHuman().setLocation(getWindow());
-            
-            //add cpu car(s)
-            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckBlue), Color.BLUE, "Blue", engine.getRandom());
-            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckGreen), Color.GREEN, "Green", engine.getRandom());
-            this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckOrange), Color.ORANGE, "Orange", engine.getRandom());
         }
         
         //reset cars

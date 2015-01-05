@@ -60,6 +60,10 @@
             <option>7</option>
             <option>8</option>
         </options>
+        <options name="Car: " id="CarType">
+            <option>Truck</option>
+            <option>SUV</option>
+        </options>
         <options name="Display Details: " id="EnableDetail">
             <option>Yes</option>
             <option>No</option>

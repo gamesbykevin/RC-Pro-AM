@@ -39,6 +39,9 @@ public class TrackProgress implements Disposable
     //timer used to track the time of each lap
     private Timer timer;
     
+    //timer user to track entire race time
+    private Timer stopWatch;
+    
     //the text description of each lap
     private List<String> lapDescription;
     
@@ -46,6 +49,9 @@ public class TrackProgress implements Disposable
     {
         //create new timer
         this.timer = new Timer();
+        
+        //create new timer
+        this.stopWatch = new Timer();
         
         //create list which will contain each lap time
         this.lapDescription = new ArrayList<>();
@@ -76,6 +82,9 @@ public class TrackProgress implements Disposable
     {
         //update timer
         timer.update(time);
+        
+        //update timer
+        stopWatch.update(time);
         
         //get the location of the current targeted way point
         final Cell goal = getCheckPointLocation(track);
@@ -162,6 +171,9 @@ public class TrackProgress implements Disposable
         
         //reset timer
         timer.reset();
+        
+        //reset timer
+        stopWatch.reset();
         
         //clear list of lap descriptions
         lapDescription.clear();
@@ -266,7 +278,7 @@ public class TrackProgress implements Disposable
         final int fontHeight = graphics.getFontMetrics().getHeight();
         
         //draw all lap times
-        for (int i = 0; i < laps; i++)
+        for (int i = 0; i <= laps; i++)
         {
             //empty description
             final String emptyDesc = "Lap " + (i+1);
@@ -280,7 +292,14 @@ public class TrackProgress implements Disposable
             //if there are no descriptions we can only show current progress
             if (lapDescription.isEmpty())
             {
-                graphics.drawString((i == 0) ? timedDesc : emptyDesc, x, drawY);
+                if (i == 0)
+                {
+                    graphics.drawString(timedDesc, x, drawY);
+                }
+                else if (i < laps)
+                {
+                    graphics.drawString(emptyDesc, x, drawY);
+                }
             }
             else
             {
@@ -290,9 +309,19 @@ public class TrackProgress implements Disposable
                 }
                 else
                 {
-                    graphics.drawString((i == lapDescription.size()) ? timedDesc : emptyDesc, x, drawY);
+                    if (i == lapDescription.size())
+                    {
+                        graphics.drawString(timedDesc, x, drawY);
+                    }
+                    else if (i < laps)
+                    {
+                        graphics.drawString(emptyDesc, x, drawY);
+                    }
                 }
             }
+            
+            if (i == laps)
+                graphics.drawString("Total - " + stopWatch.getDescPassed(Timers.FORMAT_6), x, drawY);
         }
     }
 }

@@ -59,24 +59,10 @@
             <option>6</option>
             <option>7</option>
             <option>8</option>
-            <!--
-            <option>9</option>
-            <option>10</option>
-            <option>11</option>
-            <option>12</option>
-            <option>13</option>
-            <option>14</option>
-            <option>15</option>
-            <option>16</option>
-            <option>17</option>
-            <option>18</option>
-            <option>19</option>
-            <option>20</option>
-            <option>21</option>
-            <option>22</option>
-            <option>23</option>
-            <option>24</option>
-            -->
+        </options>
+        <options name="Display Details: " id="EnableDetail">
+            <option>Yes</option>
+            <option>No</option>
         </options>
         <options name="Full Screen: " id="FullScreen">
             <option>Off</option>
@@ -113,6 +99,10 @@
         <backgroundMusicLocation></backgroundMusicLocation>
         <optionSoundLocation>resources/audio/menu/sound/selection.wav</optionSoundLocation>
         <options name="Resume" id="Resume" next="GameStart"></options>
+        <options name="Display Details: " id="EnableDetail">
+            <option>Yes</option>
+            <option>No</option>
+        </options>
         <options name="Sound: " id="Sound">
             <option>On</option>
             <option>Off</option>

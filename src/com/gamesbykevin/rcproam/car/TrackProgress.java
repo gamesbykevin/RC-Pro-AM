@@ -309,7 +309,7 @@ public class TrackProgress implements Disposable
                 }
                 else
                 {
-                    if (i == lapDescription.size())
+                    if (i == lapDescription.size() && i < laps)
                     {
                         graphics.drawString(timedDesc, x, drawY);
                     }

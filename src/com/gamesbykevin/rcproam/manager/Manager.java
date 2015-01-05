@@ -33,6 +33,9 @@ public final class Manager implements IManager
     //the maps of the tracks
     private Maps maps;
     
+    //do we hide mini-map, time, leaderboard
+    private boolean enableDetail = false;
+    
     //the size of the info screen at the bottom
     private static final int INFO_WIDTH = 256;
     private static final int INFO_HEIGHT = 64;
@@ -58,6 +61,9 @@ public final class Manager implements IManager
         
         //set the game window where game play will occur
         setWindow(screen);
+        
+        //do we hide the detail screen
+        setEnableDetailScreen(engine.getMenu().getOptionSelectionIndex(CustomMenu.LayerKey.Options, CustomMenu.OptionKey.EnableDetail) == 0);
         
         //maps = new Maps(engine.getResources().getGameImage(GameImages.Keys.Maps), getWindow());
         //hero.setImage(engine.getResources().getGameImage(GameImages.Keys.Heroes));
@@ -93,6 +99,11 @@ public final class Manager implements IManager
         //create maps if it does not already exist
         if (this.maps == null)
             this.maps = new Maps(engine.getResources());
+    }
+    
+    public void setEnableDetailScreen(final boolean enableDetail)
+    {
+        this.enableDetail = enableDetail;
     }
     
     public Cars getCars()
@@ -194,22 +205,25 @@ public final class Manager implements IManager
                 //now draw the race cars
                 cars.render(graphics);
                 
-                //set background color for stats/info screen
-                graphics.setColor(Color.BLACK);
-                graphics.fillRect(getWindow().x, getWindow().y + getWindow().height, INFO_WIDTH, INFO_HEIGHT);
-                
-                //where the mini-map will be drawn
-                final int x = getWindow().x + (getWindow().width / 2) - (Maps.MINIMAP_WIDTH / 3);
-                final int y = getWindow().y + getWindow().height + (INFO_HEIGHT / 2) - (Maps.MINIMAP_HEIGHT / 2);
-                
-                //draw the mini-map with the cars on the map
-                maps.renderMiniMap(graphics, cars, x, y);
-                
-                //draw human car info
-                cars.renderTimeInfo(graphics, getWindow().x + 1, getWindow().y + getWindow().height + (INFO_HEIGHT / 5), maps.getMap().getLaps());
-                
-                //draw the leaderboard
-                cars.renderLeaderboard(graphics, x + (int)(Maps.MINIMAP_WIDTH * 1.1), getWindow().y + getWindow().height + (INFO_HEIGHT / 5));
+                if (enableDetail)
+                {
+                    //set background color for stats/info screen
+                    graphics.setColor(Color.BLACK);
+                    graphics.fillRect(getWindow().x, getWindow().y + getWindow().height, INFO_WIDTH, INFO_HEIGHT);
+
+                    //where the mini-map will be drawn
+                    final int x = getWindow().x + (getWindow().width / 2) - (Maps.MINIMAP_WIDTH / 3);
+                    final int y = getWindow().y + getWindow().height + (INFO_HEIGHT / 2) - (Maps.MINIMAP_HEIGHT / 2);
+
+                    //draw the mini-map with the cars on the map
+                    maps.renderMiniMap(graphics, cars, x, y);
+
+                    //draw human car info
+                    cars.renderTimeInfo(graphics, getWindow().x + 1, getWindow().y + getWindow().height + (INFO_HEIGHT / 5), maps.getMap().getLaps());
+
+                    //draw the leaderboard
+                    cars.renderLeaderboard(graphics, x + (int)(Maps.MINIMAP_WIDTH * 1.1), getWindow().y + getWindow().height + (INFO_HEIGHT / 5));
+                }
             }
         }
     }

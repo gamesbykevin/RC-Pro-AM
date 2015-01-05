@@ -32,7 +32,7 @@ public final class CustomMenu extends Menu implements IElement
     public enum OptionKey 
     {
         Sound, FullScreen, 
-        Track, 
+        Track, EnableDetail
     }
     
     /**
@@ -182,6 +182,9 @@ public final class CustomMenu extends Menu implements IElement
                 
                 //get the setting for the fullscreen window
                 tmpFullscreenIndex = getOptionSelectionIndex(LayerKey.OptionsInGame, OptionKey.FullScreen);
+                
+                //do we hide the detail screen from user
+                engine.getManager().setEnableDetailScreen(getOptionSelectionIndex(LayerKey.OptionsInGame, OptionKey.EnableDetail) == 0);
             }
                 
             //if on the options screen check fullscreen setting

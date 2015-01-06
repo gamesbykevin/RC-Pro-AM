@@ -42,7 +42,7 @@ public class Attributes
     protected static final double VELOCITY_DECREASE_RATE = 0.9;
     
     //the rate we slow down the velocity when not accelerating
-    protected static final double VELOCITY_DECREASE_RATE_OTHER = 0.99;
+    protected static final double VELOCITY_DECREASE_RATE_OTHER = 0.98;
     
     //when not accelerating slow down the momentum so it will take the car longer to accelerate back to max speed
     protected static final double SPEED_DECELERATE = 0.975;

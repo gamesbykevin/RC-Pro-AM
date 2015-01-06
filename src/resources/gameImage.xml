@@ -3,6 +3,10 @@
     <!--
     <image id="Cursor">resources/images/game/cursor.gif</image>
     -->
+    <image id="RaceCarRed">resources/images/game/cars/raceCarRed.gif</image>
+    <image id="RaceCarBlue">resources/images/game/cars/raceCarBlue.gif</image>
+    <image id="RaceCarGreen">resources/images/game/cars/raceCarGreen.gif</image>
+    <image id="RaceCarOrange">resources/images/game/cars/raceCarOrange.gif</image>
     
     <image id="SuvRed">resources/images/game/cars/suvRed.gif</image>
     <image id="SuvBlue">resources/images/game/cars/suvBlue.gif</image>

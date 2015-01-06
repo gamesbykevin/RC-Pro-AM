@@ -63,6 +63,7 @@
         <options name="Car: " id="CarType">
             <option>Truck</option>
             <option>SUV</option>
+            <option>Race Car</option>
         </options>
         <options name="Display Details: " id="EnableDetail">
             <option>Yes</option>

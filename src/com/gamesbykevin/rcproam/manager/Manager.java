@@ -43,6 +43,7 @@ public final class Manager implements IManager
     //different car types
     private static final int CAR_TYPE_TRUCK = 0;
     private static final int CAR_TYPE_SUV = 1;
+    private static final int CAR_TYPE_RACE_CAR = 2;
     
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
@@ -97,7 +98,6 @@ public final class Manager implements IManager
                     this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.SuvOrange), Color.ORANGE, "Orange", engine.getRandom());
                     break;
                     
-                default:
                 case CAR_TYPE_TRUCK:
                     //add human car first
                     this.cars.addHuman(engine.getResources().getGameImage(GameImages.Keys.TruckRed), Color.RED, "Red");
@@ -107,6 +107,19 @@ public final class Manager implements IManager
                     this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckGreen), Color.GREEN, "Green", engine.getRandom());
                     this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.TruckOrange), Color.ORANGE, "Orange", engine.getRandom());
                     break;
+                    
+                case CAR_TYPE_RACE_CAR:
+                    //add human car first
+                    this.cars.addHuman(engine.getResources().getGameImage(GameImages.Keys.RaceCarRed), Color.RED, "Red");
+
+                    //add cpu car(s)
+                    this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.RaceCarBlue), Color.BLUE, "Blue", engine.getRandom());
+                    this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.RaceCarGreen), Color.GREEN, "Green", engine.getRandom());
+                    this.cars.addCpu(engine.getResources().getGameImage(GameImages.Keys.RaceCarOrange), Color.ORANGE, "Orange", engine.getRandom());
+                    break;
+                    
+                default:
+                    throw new Exception("Car Type not setup here");
             }
             
             //set human in center of screen

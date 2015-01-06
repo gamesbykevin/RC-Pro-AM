@@ -69,6 +69,10 @@
             <option>Yes</option>
             <option>No</option>
         </options>
+        <options name="Cpu Assistance: " id="Handicap">
+            <option>Off</option>
+            <option>On</option>
+        </options>
         <options name="Full Screen: " id="FullScreen">
             <option>Off</option>
             <option>On</option>

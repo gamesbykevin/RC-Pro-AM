@@ -41,6 +41,12 @@ public class Cars implements Disposable, IElement
     //the distance between cars to detect collision
     private static final double COLLISION_DISTANCE = 0.5;
     
+    //the amount of checkpoints allowed before applying handicap 
+    private static final int HANDICAP_LIMIT = 2;
+    
+    //do we have cpu assistance enabled
+    private boolean handicap = false;
+    
     public Cars()
     {
         //create new list to hold the cars
@@ -62,10 +68,11 @@ public class Cars implements Disposable, IElement
         //do not pause
         this.pause = false;
         
-        //reset track progress for the cars
+        //reset track progress for the cars, etc...
         for (int i = 0; i < cars.size(); i++)
         {
             cars.get(i).getTracker().reset();
+            cars.get(i).getAttributes().reset();
         }
     }
     
@@ -77,6 +84,27 @@ public class Cars implements Disposable, IElement
     public Car get(final int index)
     {
         return this.cars.get(index);
+    }
+    
+    /**
+     * Set the handicap setting.<br>
+     * If the handicap is enabled the following logic will take place:<br>
+     * 1. The cpu cars will drive faster for each car the human is beating by a large margin
+     * 2. The cpu cars will drive slower for each car that is beating the human by a large margin
+     * @param handicap True if cpu assistance is enabled, false otherwise
+     */
+    public void setHandicap(final boolean handicap)
+    {
+        this.handicap = handicap;
+    }
+    
+    /**
+     * Is handicap mode enabled
+     * @return true if enabled, false otherwise
+     */
+    public boolean hasHandicap()
+    {
+        return this.handicap;
     }
     
     /**
@@ -222,7 +250,7 @@ public class Cars implements Disposable, IElement
         else
         {
             //place the cars in perspective to the human racer
-            adjustCarLocation(engine);
+            adjustCars(engine);
             
             if (!timer.hasTimePassed())
             {
@@ -297,9 +325,6 @@ public class Cars implements Disposable, IElement
                         }
                     }
 
-                    if (Shared.DEBUG)
-                        System.out.println("Lap " + car.getTracker().getLaps() + " of " + required + " (Car - " + car.getName() + ")");
-
                     //we have a winner exit method
                     if (pause)
                         return;
@@ -343,11 +368,15 @@ public class Cars implements Disposable, IElement
     }
     
     /**
-     * Place the cars on the screen accordingly so they are rendered in perspective to the human driver
+     * Adjust the cars.<br>
+     * Place the cpu cars in perspective to the human car<br><br>
+     * Apply handicap (if enabled)<br>
+     * The handicap will slow the cpu cars that are at least 2 check points ahead of the human.<br>
+     * The handicap will speed up the cpu cars that are at least 2 check points behind the human.
      * @param engine Object containing all game elements
      * @throws Exception If there is no human car an exception will be thrown
      */
-    private void adjustCarLocation(final Engine engine) throws Exception
+    private void adjustCars(final Engine engine) throws Exception
     {
         //the current map used
         final StaticMap map = engine.getManager().getMaps().getMap();
@@ -355,9 +384,12 @@ public class Cars implements Disposable, IElement
         //the screen where gameplay will take place
         final Rectangle screen = engine.getManager().getWindow();
         
+        //get the human controlled car
+        final Car human = getHuman();
+        
         //get the coordinates of the human car so we can determine where the cpu should be rendered
-        final double humanX = map.getAdjustedX(getHuman(), screen);
-        final double humanY = map.getAdjustedY(getHuman(), screen);
+        final double humanX = map.getAdjustedX(human, screen);
+        final double humanY = map.getAdjustedY(human, screen);
         
         for (int i = 0; i < cars.size(); i++)
         {
@@ -369,12 +401,44 @@ public class Cars implements Disposable, IElement
                 final double x = map.getAdjustedX(car, screen);
                 final double y = map.getAdjustedY(car, screen);
                 
-                //place the car in the center of the screen first
-                car.setLocation(screen);
+                //temporary place the car where the human is
+                car.setLocation(human);
                 
                 //now set the x,y based on the difference from the human
                 car.setX(car.getX() + (humanX - x));
                 car.setY(car.getY() + (humanY - y));
+                
+                //if handicap is enabled
+                if (handicap)
+                {
+                    //if the car is ahead of the human
+                    if (car.getTracker().getRaceProgress() > human.getTracker().getRaceProgress())
+                    {
+                        //if the cpu car is further from the human than the handicap limit, slow down the cpu car
+                        if (car.getTracker().getRaceProgress() - human.getTracker().getRaceProgress() > HANDICAP_LIMIT)
+                        {
+                            car.getAttributes().applyHandicap(true);
+                        }
+                        else
+                        {
+                            //if not too far away disable handicap mode
+                            car.getAttributes().disableHandicap();
+                        }
+                    }
+                    else
+                    {
+                        //if the human is further from the cpu than the handicap limit, speed up the cpu
+                        if (human.getTracker().getRaceProgress() - car.getTracker().getRaceProgress() > HANDICAP_LIMIT)
+                        {
+                            car.getAttributes().applyHandicap(false);
+                        }
+                        else
+                        {
+                            //if not too far away disable handicap mode
+                            car.getAttributes().disableHandicap();
+                        }
+                    }
+                }
             }
             
             //we only want to draw the car if it is on the screen
@@ -386,7 +450,7 @@ public class Cars implements Disposable, IElement
     public void render(final Graphics graphics)
     {
         //first order the cars to be rendered in the appropriate order
-        sortCarLocation();
+        sortCars(true);
 
         //then draw the cars
         for (int i = 0; i < cars.size(); i++)
@@ -398,9 +462,10 @@ public class Cars implements Disposable, IElement
     }
     
     /**
-     * Sort the cars based on column, row so they are rendered appropriately in isometric fashion
+     * Sort the cars.<br>
+     * @param byLocation If true, the cars will be sorted by location, else sort by rank
      */
-    private void sortCarLocation()
+    private void sortCars(final boolean byLocation)
     {
         //were objects swapped
         boolean swapped = true;
@@ -413,47 +478,29 @@ public class Cars implements Disposable, IElement
             swapped = false;
             j++;
             
+            //check each car
             for (int i = 0; i < cars.size() - j; i++) 
             {
+                //check the 2 cars next to each other in list
                 Car car1 = cars.get(i);
                 Car car2 = cars.get(i + 1);
-                if ((int)car1.getRow() > (int)car2.getRow() || (int)car1.getRow() >= (int)car2.getRow() && car1.getCol() > car2.getCol())
+                
+                //do we switch the cars
+                boolean swap;
+                
+                if (byLocation)
                 {
-                    //get temp car object
-                    tmp = cars.get(i);
-                    
-                    //swap objects
-                    cars.set(i, cars.get(i + 1));
-                    cars.set(i + 1, tmp);
-                    
-                    //flag that objects are swapped
-                    swapped = true;
+                    //sort the car by the location
+                    swap = car1.getRow() > car2.getRow() || (int)car1.getRow() >= (int)car2.getRow() && car1.getCol() > car2.getCol();
                 }
-            }
-        }
-    }
-    
-    /**
-     * Sort the cars so we know what place they are in 1st, 2nd, 3rd, etc.....
-     */
-    private void sortCarRank()
-    {
-        //were objects swapped
-        boolean swapped = true;
-        int j = 0;
-        Car tmp;
-        
-        //continue as long as objects have been swapped
-        while (swapped) 
-        {
-            swapped = false;
-            j++;
-            
-            for (int i = 0; i < cars.size() - j; i++) 
-            {
-                Car car1 = cars.get(i);
-                Car car2 = cars.get(i + 1);
-                if (car2.getTracker().getRaceProgress() > car1.getTracker().getRaceProgress())
+                else
+                {
+                    //sort the cars by the race progress
+                    swap = car2.getTracker().getRaceProgress() > car1.getTracker().getRaceProgress();
+                }
+                
+                //if we are to swap cars
+                if (swap)
                 {
                     //get temp car object
                     tmp = cars.get(i);
@@ -509,7 +556,7 @@ public class Cars implements Disposable, IElement
     public void renderLeaderboard(final Graphics graphics, final int x, final int y)
     {
         //sort the cars by rank
-        sortCarRank();
+        sortCars(false);
         
         //the color of the text is white
         graphics.setColor(Color.WHITE);

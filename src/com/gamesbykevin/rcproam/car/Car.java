@@ -571,7 +571,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
         //make sure the angle stays within range
         correctAngle();
         
-        //make sure appropriate animation is displayed
+        //make sure appropriate animation is displayed for the new angle
         correctAnimation();
     }
     

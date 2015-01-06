@@ -3,6 +3,7 @@ package com.gamesbykevin.rcproam.car;
 import com.gamesbykevin.framework.base.Cell;
 
 import com.gamesbykevin.rcproam.map.Track;
+import com.gamesbykevin.rcproam.shared.Shared;
 
 /**
  * This class will contain a given cars attributes
@@ -47,6 +48,18 @@ public class Attributes
     //when not accelerating slow down the momentum so it will take the car longer to accelerate back to max speed
     protected static final double SPEED_DECELERATE = 0.975;
     
+    //the increase to apply if handicap mode is enabled
+    private static final double HANDICAP_RATE_INCREASE = 1.1;
+    
+    //the decrease to apply if handicap mode is enabled
+    private static final double HANDICAP_RATE_DECREASE = .9;
+    
+    //do we apply the handicap to this cars attributes
+    private boolean handicap = false;
+    
+    //which handicap do we apply (true = speed up, false = speed down)
+    private boolean penalty = false;
+    
     /**
      * Get the amount of updates required to turn the car 15 degrees
      * @return The number of updates turning in a given direction to turn 15 degrees
@@ -54,6 +67,15 @@ public class Attributes
     protected int getTurnCount()
     {
         return this.turnCount;
+    }
+    
+    /**
+     * Reset the attributes.<br>
+     * Currently this will only turn handicap mode off
+     */
+    public void reset()
+    {
+        disableHandicap();
     }
     
     /**
@@ -140,6 +162,30 @@ public class Attributes
             setSpeed(getMaxSpeed());
     }
     
+    private boolean hasHandicap()
+    {
+        return this.handicap;
+    }
+    
+    /**
+     * Enable handicap mode for this car
+     * @param penalty If true the max speed will decrease, if false the max speed will increase
+     */
+    public void applyHandicap(final boolean penalty)
+    {
+        this.handicap = true;
+        
+        this.penalty = penalty;
+    }
+    
+    /**
+     * Disable handicap mode for this car
+     */
+    public void disableHandicap()
+    {
+        this.handicap = false;
+    }
+    
     /**
      * Set the maximum speed depending on where the car is on the track
      * @param track The track the car is racing on
@@ -154,6 +200,21 @@ public class Attributes
         else
         {
             setMaxSpeed(getMaxOffRoadSpeed());
+        }
+        
+        //if we have handicap we will adjust max speed
+        if (hasHandicap())
+        {
+            if (!penalty)
+            {
+                //increase max road speed since we are not penalized
+                setMaxSpeed(getMaxSpeed() * HANDICAP_RATE_INCREASE);
+            }
+            else
+            {
+                //decrease max road speed since we are penalized
+                setMaxSpeed(getMaxSpeed() * HANDICAP_RATE_DECREASE);
+            }
         }
     }
 }

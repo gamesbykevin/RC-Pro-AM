@@ -45,6 +45,9 @@ public final class Manager implements IManager
     private static final int CAR_TYPE_SUV = 1;
     private static final int CAR_TYPE_RACE_CAR = 2;
     
+    //the value of handicap enabled
+    private static final int HANDICAP_ENABLED = 1;
+    
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
      * @param engine Engine for our game that contains all objects needed
@@ -85,6 +88,9 @@ public final class Manager implements IManager
         {
             //create new container for cars
             this.cars = new Cars();
+            
+            //set the handicap setting
+            this.cars.setHandicap(engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.Handicap) == HANDICAP_ENABLED);
             
             switch (engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.CarType))
             {

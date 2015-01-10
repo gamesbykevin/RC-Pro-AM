@@ -34,6 +34,22 @@ public final class Cpu extends Car
     //the optional amount of updates required to perform a 15 degree turn (must be a multiple of 2)
     private static int[] TURN_COUNT_OPTIONS = {2, 4, 6, 8};
     
+    //the min/max angle difference that the AI has to be within the targeted checkpoint
+    private static final double ACCURATE_TURN_INTERVAL_MIN = Car.TURN_INTERVAL * .25;
+    private static final double ACCURATE_TURN_INTERVAL_MAX = Car.TURN_INTERVAL * .6;
+    
+    private static final double RELAXED_TURN_INTERVAL_MIN = Car.TURN_INTERVAL * .5;
+    private static final double RELAXED_TURN_INTERVAL_MAX = Car.TURN_INTERVAL * .8;
+    
+    //this is the degree limit we have to be within when facing the assigned checkpoint
+    private double accurateTurnInterval;
+    
+    //this is when the car is far enough away from the checkpoint, they don't have to face so close
+    private double relaxedTurnInterval;
+    
+    //when so close to the checkpoint, make the car face more torwards the checkpoint
+    private static final double ACCURATE_TURN_INTERVAL_PROGRESS = .75;
+    
     public Cpu(final Random random) throws Exception
     {
         super(false);
@@ -41,6 +57,12 @@ public final class Cpu extends Car
         //make sure the minimum speed does not exceed the max
         if (DEFAULT_SPEED_ROAD_MIN > DEFAULT_SPEED_ROAD_MAX)
             throw new Exception("The minimum road speed can't be greater than the maximum");
+        
+        if (ACCURATE_TURN_INTERVAL_MIN > ACCURATE_TURN_INTERVAL_MAX)
+            throw new Exception("The minimum turn interval can't be greater than the maximum");
+        
+        if (RELAXED_TURN_INTERVAL_MIN > RELAXED_TURN_INTERVAL_MAX)
+            throw new Exception("The minimum turn interval can't be greater than the maximum");
         
         //set the amount of updates required to turn the car 15 degrees
         getAttributes().setTurnCount(TURN_COUNT_OPTIONS[random.nextInt(TURN_COUNT_OPTIONS.length)]);
@@ -54,8 +76,50 @@ public final class Cpu extends Car
         //set the max speed allowed while turning
         setDefaultMaxTurnSpeed(getDefaultMaxRoadSpeed() * TURN_SPEED_RATIO);
         
+        //set the limit that the car can face away from the checkpoint while close
+        setAccurateTurnInterval(((ACCURATE_TURN_INTERVAL_MAX - ACCURATE_TURN_INTERVAL_MIN) * random.nextDouble()) + ACCURATE_TURN_INTERVAL_MIN);
+        
+        //set the limit that the car can face away from the checkpoint while far
+        setRelaxedTurnInterval(((RELAXED_TURN_INTERVAL_MAX - RELAXED_TURN_INTERVAL_MIN) * random.nextDouble()) + RELAXED_TURN_INTERVAL_MIN);
+        
         //set max driving speed since the cpu starts on a road
         getAttributes().setMaxRoadSpeed(getDefaultMaxRoadSpeed());
+    }
+    
+    /**
+     * Set the required degree limit the car has to face within the checkpoint while very far
+     * @param relaxedTurnInterval The max degree limit you can be facing away from the checkpoint
+     */
+    private void setRelaxedTurnInterval(final double relaxedTurnInterval)
+    {
+        this.relaxedTurnInterval = relaxedTurnInterval;
+    }
+    
+    /**
+     * Get the required degree limit the car has to face within the checkpoint while very far
+     * @return The number of degrees you can be off by
+     */
+    private double getRelaxedTurnInterval()
+    {
+        return this.relaxedTurnInterval;
+    }
+    
+    /**
+     * Set the required degree limit the car has to face within the checkpoint while very close
+     * @param accurateTurnInterval The max degree limit you can be facing away from the checkpoint
+     */
+    private void setAccurateTurnInterval(final double accurateTurnInterval)
+    {
+        this.accurateTurnInterval = accurateTurnInterval;
+    }
+    
+    /**
+     * Get the required degree limit the car has to face within the checkpoint while very close
+     * @return The number of degrees you can be off by
+     */
+    private double getAccurateTurnInterval()
+    {
+        return this.accurateTurnInterval;
     }
     
     /**
@@ -118,8 +182,19 @@ public final class Cpu extends Car
         //how far away from our destination are we
         final double difference = (degrees > destination) ? degrees - destination : destination - degrees;
         
-        //make sure the cpu is turning towards the way point within a certain amount
-        if (difference >= Car.AI_INTERVAL)
+        /**
+         * CHANGE AI HERE SO IF WE AREN'T WITHIN THE LIMIT WE TARGET THE CHECK POINT DIRECTLY
+         * IF WE ARE WITHIN THE LIMIT, DO NOT TARGET THE CHECK POINT AND JUST KEEP ACCELERATING
+         */
+        
+        //get progress towards next checkpoint (range 0.0 - 1.0)
+        final double progress = super.getTracker().getCurrentCheckPointProgress(track, this);
+        
+        //determine the limit by how close we are to the checkpoint
+        final double limit = (progress > ACCURATE_TURN_INTERVAL_PROGRESS) ? getAccurateTurnInterval() : getRelaxedTurnInterval();
+        
+        //make sure the cpu is turning towards the way point within a certain degree
+        if (difference > limit)
         {
             //set max speed while we are turning
             getAttributes().setMaxRoadSpeed(getDefaultMaxTurnSpeed());

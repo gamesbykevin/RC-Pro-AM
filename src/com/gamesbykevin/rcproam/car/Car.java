@@ -39,9 +39,6 @@ public abstract class Car extends Sprite implements Disposable, IElement
     //is the car controlled by a human
     private final boolean human;
     
-    //the AI needs to be within a certain angle when moving to the next way point
-    protected static final double AI_INTERVAL = (TURN_INTERVAL / 2);
-    
     //dimensions of car
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;

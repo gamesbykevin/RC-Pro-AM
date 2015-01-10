@@ -48,6 +48,9 @@ public final class Manager implements IManager
     //the value of handicap enabled
     private static final int HANDICAP_ENABLED = 1;
     
+    //check cars for collision
+    private static final int COLLISION_ENABLED = 1;
+    
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
      * @param engine Engine for our game that contains all objects needed
@@ -91,6 +94,9 @@ public final class Manager implements IManager
             
             //set the handicap setting
             this.cars.setHandicap(engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.Handicap) == HANDICAP_ENABLED);
+            
+            //are we checking for collision
+            this.cars.setCheckCollision(engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.Collision) == COLLISION_ENABLED);
             
             switch (engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.CarType))
             {

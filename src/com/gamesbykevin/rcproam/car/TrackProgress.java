@@ -244,6 +244,19 @@ public class TrackProgress implements Disposable
      */
     private void updateRaceProgress(final Track track, final Cell carLocation)
     {
+        //progress is the total # of completed checkpoints + the progress towards next checkpoint
+        this.raceProgress = (double)this.checkPoints + getCurrentCheckPointProgress(track, carLocation);
+    }
+    
+    /**
+     * Get the progress from the previous checkpoint to the next one.<br>
+     * Progress will range from 0.0 - 1.0
+     * @param track The current track we are racing on
+     * @param carLocation The current location of the car
+     * @return 
+     */
+    public double getCurrentCheckPointProgress(final Track track, final Cell carLocation)
+    {
         //location of previous checkpoint
         Cell previous = (getCheckPointTarget() <= 0) ? track.getCheckPoint(track.getCheckPointCount() - 1) : track.getCheckPoint(getCheckPointTarget() - 1);
         
@@ -256,8 +269,8 @@ public class TrackProgress implements Disposable
         //the progress completed towards next check point
         final double progressDistance = fullDistance - Cell.getDistance(carLocation, current);
         
-        //return result which is the total # of completed checkpoints + the progress towards next checkpoint
-        this.raceProgress = (double)this.checkPoints + (double)(progressDistance / fullDistance);
+        //return the progress completed towards the next checkpoint
+        return (double)(progressDistance / fullDistance);
     }
     
     /**

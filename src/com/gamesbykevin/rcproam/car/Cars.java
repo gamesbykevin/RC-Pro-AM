@@ -47,6 +47,9 @@ public class Cars implements Disposable, IElement
     //do we have cpu assistance enabled
     private boolean handicap = false;
     
+    //do we check collision of cars
+    private boolean checkCollision = false;
+    
     public Cars()
     {
         //create new list to hold the cars
@@ -84,6 +87,24 @@ public class Cars implements Disposable, IElement
     public Car get(final int index)
     {
         return this.cars.get(index);
+    }
+    
+    /**
+     * Set check collision
+     * @param checkCollision if true, the cars will stop if they run into another, false no collision is checked
+     */
+    public void setCheckCollision(final boolean checkCollision)
+    {
+        this.checkCollision = checkCollision;
+    }
+    
+    /**
+     * Should we check cars for collision
+     * @return true - yes, false - no
+     */
+    private boolean doCheckCollision()
+    {
+        return this.checkCollision;
     }
     
     /**
@@ -285,16 +306,20 @@ public class Cars implements Disposable, IElement
                 //update the car
                 car.update(engine);
 
-                //if we have collision
-                if (hasCollision(car))
+                //are we checking for collision
+                if (doCheckCollision())
                 {
-                    //only flag collisions that are rendered on screen
-                    if (car.hasRender())
-                        collision = true;
-                    
-                    //move the car back to the previous place
-                    car.setCol(col);
-                    car.setRow(row);
+                    //if we have collision
+                    if (hasCollision(car))
+                    {
+                        //only flag collisions that are rendered on screen
+                        if (car.hasRender())
+                            collision = true;
+
+                        //move the car back to the previous place
+                        car.setCol(col);
+                        car.setRow(row);
+                    }
                 }
                 
                 //if the current number of laps has increased we have completed a lap
@@ -397,6 +422,13 @@ public class Cars implements Disposable, IElement
             
             if (!car.isHuman())
             {
+                if (Shared.DEBUG)
+                {
+                    //if not on road display notification
+                    if (!map.getTrack().isRoad(car))
+                        System.out.println("Car went off road: " + car.getName());
+                }
+                
                 //get the coordinates of the specified cpu car
                 final double x = map.getAdjustedX(car, screen);
                 final double y = map.getAdjustedY(car, screen);

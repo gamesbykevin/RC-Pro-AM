@@ -6,6 +6,7 @@ import com.gamesbykevin.framework.resources.Disposable;
 
 import com.gamesbykevin.rcproam.car.Car;
 import com.gamesbykevin.rcproam.car.Cars;
+import com.gamesbykevin.rcproam.shared.Shared;
 
 import java.awt.Graphics;
 import java.awt.Image;
@@ -291,7 +292,17 @@ public final class StaticMap extends Sprite implements Disposable
     
     public void render(final Graphics graphics)
     {
-        super.draw(graphics);
+        int dx1 = 0;
+        int dy1 = 0;
+        int dx2 = Shared.ORIGINAL_WIDTH;
+        int dy2 = Shared.ORIGINAL_HEIGHT;
+        int sx1 = (int)(-getX());
+        int sy1 = (int)(-getY());
+        int sx2 = (int)(-getX() + Shared.ORIGINAL_WIDTH);
+        int sy2 = (int)(-getY() + Shared.ORIGINAL_HEIGHT);
+        
+        //only draw the portion of track that we need, which uses less memory
+        super.draw(graphics, getImage(), dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2);
     }
     
     /**

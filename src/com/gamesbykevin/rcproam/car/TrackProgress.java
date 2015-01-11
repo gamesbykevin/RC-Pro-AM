@@ -45,6 +45,9 @@ public class TrackProgress implements Disposable
     //the text description of each lap
     private List<String> lapDescription;
     
+    //the height of font, archive to save resources
+    private int fontHeight = 0;
+    
     public TrackProgress()
     {
         //create new timer
@@ -183,6 +186,9 @@ public class TrackProgress implements Disposable
         
         //reset race completion progress
         raceProgress = 0;
+        
+        //get font height again
+        fontHeight = 0;
     }
     
     /**
@@ -288,7 +294,8 @@ public class TrackProgress implements Disposable
         graphics.setColor(Color.WHITE);
         
         //get the font height
-        final int fontHeight = graphics.getFontMetrics().getHeight();
+        if (fontHeight == 0)
+            fontHeight = graphics.getFontMetrics().getHeight();
         
         //draw all lap times
         for (int i = 0; i <= laps; i++)

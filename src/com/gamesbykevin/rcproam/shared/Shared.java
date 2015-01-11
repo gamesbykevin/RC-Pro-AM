@@ -12,6 +12,9 @@ import java.awt.image.BufferedImage;
  */
 public final class Shared 
 {
+    //show UPS counter and other DEBUG info
+    public static final boolean DEBUG = false;
+    
     /**
      * These dimensions is the size of the game window the user will see.
      * NOTE: If these dimensions do not match the original then the mouse input will be off.
@@ -22,9 +25,6 @@ public final class Shared
     //the game is originally programmed for these dimensions
     public static final int ORIGINAL_WIDTH  = 256;
     public static final int ORIGINAL_HEIGHT = 256;
-    
-    //show UPS/FPS counters
-    public static final boolean DEBUG = true;
     
     //do we hide mouse when the menu is not visible and actual gameplay has started
     public static boolean HIDE_MOUSE = true;

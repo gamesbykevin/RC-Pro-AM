@@ -13,14 +13,14 @@
         <force>true</force>
         <pause>false</pause>
         <duration>3000</duration>
-        <image>resources/images/menu/untitled.png</image>
+        <image>resources/images/menu/initial.png</image>
     </layer>
     <layer id="Credits" next="MainTitle">
         <transition>SCROLL_VERTICAL_NORTH</transition>
         <force>true</force>
         <pause>false</pause>
         <duration>5000</duration>
-        <image>resources/images/menu/untitled.png</image>
+        <image>resources/images/menu/credit.png</image>
     </layer>
     <layer id="MainTitle">
         <transition>NONE</transition>
@@ -88,14 +88,14 @@
         <force>false</force>
         <pause>true</pause>
         <duration></duration>
-        <image>resources/images/menu/untitled.png</image>
+        <image>resources/images/menu/controls.png</image>
     </layer>
     <layer id="Instructions" next="MainTitle">
         <transition>NONE</transition>
         <force>false</force>
         <pause>true</pause>
         <duration></duration>
-        <image>resources/images/menu/untitled.png</image>
+        <image>resources/images/menu/instructions.png</image>
     </layer>
     <layer id="GameStart">
         <!-- THIS LAYER IS INTENTIONALLY LEFT BLANK, THIS IS WHERE MAIN GAMEPLAY WILL START -->

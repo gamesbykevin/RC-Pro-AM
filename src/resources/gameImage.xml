@@ -26,4 +26,7 @@
     <image id="Track06">resources/images/game/maps/RCProAmMapLevel06BG.png</image>
     <image id="Track07">resources/images/game/maps/RCProAmMapLevel07BG.png</image>
     <image id="Track08">resources/images/game/maps/RCProAmMapLevel08BG.png</image>
+    
+    <image id="GameOver">resources/images/game/gameover.png</image>
+    <image id="Win">resources/images/game/win.png</image>
 </images>

@@ -11,4 +11,6 @@
     <sound id="Turn">resources/audio/game/turn.wav</sound>
     <sound id="RaceStart">resources/audio/game/raceStart.mp3</sound>
     <sound id="RaceFinish">resources/audio/game/raceFinish.mp3</sound>
+    <sound id="RaceWin">resources/audio/game/raceWin.mp3</sound>
+    <sound id="RaceLose">resources/audio/game/raceLose.mp3</sound>
 </sounds>

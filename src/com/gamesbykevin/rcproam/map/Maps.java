@@ -100,7 +100,7 @@ public class Maps implements IElement, Disposable
      * @param index The index of the desired map, if out of bounds 0 will be assigned
      * @throws exception if the maps have not finished loading or if no maps exist
      */
-    public void setIndex(final int index) throws Exception
+    private void setIndex(final int index) throws Exception
     {
         this.index = index;
         
@@ -244,10 +244,10 @@ public class Maps implements IElement, Disposable
                     break;
                     
                 case TRACK_08:
-                    offsetCol = 14;
+                    offsetCol = 14.5;
                     offsetRow = 0.75;
-                    startCol = 55.75;
-                    startRow = 34.15;
+                    startCol = 56.25;
+                    startRow = 34.25;
                     image = engine.getResources().getGameImage(GameImages.Keys.Track08);
                     break;
                     
@@ -278,7 +278,13 @@ public class Maps implements IElement, Disposable
         }
     }
     
-    private void setMap(final Engine engine, final int index) throws Exception
+    /**
+     * Assign the map to be currently used
+     * @param engine Object that contains all game elements
+     * @param index The track we are starting on
+     * @throws Exception 
+     */
+    public void setMap(final Engine engine, final int index) throws Exception
     {
         //assign the current map
         setIndex(index);
@@ -288,9 +294,6 @@ public class Maps implements IElement, Disposable
                     
         //update the map location based on the human location
         getMap().updateLocation(engine.getManager().getCars().getHuman(), engine.getManager().getWindow());
-        
-        //reset the cars as well
-        engine.getManager().getCars().reset();
     }
     
     @Override
@@ -312,7 +315,7 @@ public class Maps implements IElement, Disposable
     /**
      * Render the mini-map of the current assigned map
      * @param graphics Graphics object
-     * @param cars The object containing cars in play
+     * @param cars The object containing cars in play, if null cars will not be drawn
      * @param startX x-coordinate where we want to draw the mini-map
      * @param startY y-coordinate where we want to draw the mini-map
      */
@@ -325,8 +328,11 @@ public class Maps implements IElement, Disposable
         //render the minimap to the image
         getMap().renderMiniMap(minimapGraphics);
         
-        //now draw the cars on top of the mini map to the image
-        cars.renderMiniMapLocations(minimapGraphics);
+        if (cars != null)
+        {
+            //now draw the cars on top of the mini map to the image
+            cars.renderMiniMapLocations(minimapGraphics);
+        }
         
         //now draw the final image
         graphics.drawImage(minimap, startX, startY, MINIMAP_WIDTH, MINIMAP_HEIGHT, null);

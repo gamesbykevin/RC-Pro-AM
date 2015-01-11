@@ -29,15 +29,6 @@ public class Cars implements Disposable, IElement
     //the container for the cars
     private List<Car> cars;
     
-    //do we freeze the cars
-    private boolean pause = false;
-    
-    //this timer will prevent the cars from racing for 5 seconds
-    private Timer timer;
-    
-    //the start delay is 5 seconds
-    private static final long START_DELAY = Timers.toNanoSeconds(5010L);
-    
     //the distance between cars to detect collision
     private static final double COLLISION_DISTANCE = 0.5;
     
@@ -50,32 +41,40 @@ public class Cars implements Disposable, IElement
     //do we check collision of cars
     private boolean checkCollision = false;
     
+    //has the race completed
+    private boolean raceComplete = false;
+    
+    //does the human continue to the next race, if false the game is over
+    private boolean win = false;
+    
     public Cars()
     {
         //create new list to hold the cars
         this.cars = new ArrayList<>();
-        
-        //create new timer
-        this.timer = new Timer(START_DELAY);
     }
     
     /**
      * Reset the race delay timer as well as the track progress for the cars.<br>
-     * Call this method when starting a new race
+     * This method is typically called when starting a new race
+     * @param random Object used to make random decisions
      */
-    public void reset()
+    public void reset(final Random random) throws Exception
     {
-        //reset race delay timer
-        this.timer.reset();
-        
-        //do not pause
-        this.pause = false;
+        //we have not completed race
+        this.setRaceComplete(false);
         
         //reset track progress for the cars, etc...
         for (int i = 0; i < cars.size(); i++)
         {
-            cars.get(i).getTracker().reset();
-            cars.get(i).getAttributes().reset();
+            //get the current car
+            Car car = cars.get(i);
+            
+            //reset the car
+            car.reset();
+            
+            //if this is the cpu, assign random stats for this car speed, accelerate, etc...
+            if (!car.isHuman())
+                ((Cpu)car).assignStats(random);
         }
     }
     
@@ -87,6 +86,42 @@ public class Cars implements Disposable, IElement
     public Car get(final int index)
     {
         return this.cars.get(index);
+    }
+    
+    /**
+     * Set the race as completed
+     * @param raceComplete true - race completed, false otherwise
+     */
+    private void setRaceComplete(final boolean raceComplete)
+    {
+        this.raceComplete = raceComplete;
+    }
+    
+    /**
+     * Has the race completed?
+     * @return true - yes, false - no
+     */
+    public boolean hasRaceCompleted()
+    {
+        return this.raceComplete;
+    }
+    
+    /**
+     * Did the human qualify to the next race
+     * @return true if the human did not finish last, false otherwise
+     */
+    public boolean hasWin()
+    {
+        return this.win;
+    }
+    
+    /**
+     * Set win
+     * @param win true if the human did not finish last, false otherwie
+     */
+    public void setWin(final boolean win)
+    {
+        this.win = win;
     }
     
     /**
@@ -257,113 +292,89 @@ public class Cars implements Disposable, IElement
     @Override
     public void update(final Engine engine) throws Exception
     {
-        if (!timer.hasStarted())
+        //adjust the car locations, etc...
+        adjustCars(engine);
+        
+        //did at least 1 car complete a lap
+        boolean lapCompleted = false;
+
+        //has at least 1 car collided with another
+        boolean collision = false;
+
+        for (int i = 0; i < cars.size(); i++)
         {
-            //reset the cars
-            reset();
+            Car car = cars.get(i);
 
-            //play race start sound
-            engine.getResources().playGameAudio(GameAudio.Keys.RaceStart);
-            
-            //update timer
-            timer.update(engine.getMain().getTime());
-        }
-        else
-        {
-            //place the cars in perspective to the human racer
-            adjustCars(engine);
-            
-            if (!timer.hasTimePassed())
+            //get the amount of laps the car has completed
+            final int laps = car.getTracker().getLaps();
+
+            //store the previous location of the car
+            final double col = car.getCol();
+            final double row = car.getRow();
+
+            //update the car
+            car.update(engine);
+
+            //are we checking for collision
+            if (doCheckCollision())
             {
-                //update timer
-                timer.update(engine.getMain().getTime());
-                
-                //do not continue yet
-                return;
-            }
-            
-            //if paused do not update any cars
-            if (pause)
-                return;
-
-            //did at least 1 car complete a lap
-            boolean lapCompleted = false;
-            
-            //has at least 1 car collided with another
-            boolean collision = false;
-            
-            for (int i = 0; i < cars.size(); i++)
-            {
-                Car car = cars.get(i);
-
-                //get the amount of laps the car has completed
-                final int laps = car.getTracker().getLaps();
-
-                //store the previous location of the car
-                final double col = car.getCol();
-                final double row = car.getRow();
-                
-                //update the car
-                car.update(engine);
-
-                //are we checking for collision
-                if (doCheckCollision())
+                //if we have collision
+                if (hasCollision(car))
                 {
-                    //if we have collision
-                    if (hasCollision(car))
-                    {
-                        //only flag collisions that are rendered on screen
-                        if (car.hasRender())
-                            collision = true;
+                    //only flag collisions that are rendered on screen
+                    if (car.hasRender())
+                        collision = true;
 
-                        //move the car back to the previous place
-                        car.setCol(col);
-                        car.setRow(row);
-                    }
-                }
-                
-                //if the current number of laps has increased we have completed a lap
-                if (car.getTracker().getLaps() > laps)
-                {
-                    //get the number of laps required for the current map we are racing
-                    final int required = engine.getManager().getMaps().getMap().getLaps();
-
-                    //if this car has completed the required amoun of laps for the race
-                    if (car.getTracker().getLaps() >= required)
-                    {
-                        //stop all sound
-                        engine.getResources().stopAllSound();
-
-                        //play race complete sound
-                        engine.getResources().playGameAudio(GameAudio.Keys.RaceFinish);
-
-                        //freeze cars
-                        pause = true;
-                    }
-                    else
-                    {
-                        //verify the car is drawn on screen before we play the lap completed sound effect
-                        if (car.hasRender())
-                        {
-                            //a car has completed a lap
-                            lapCompleted = true;
-                        }
-                    }
-
-                    //we have a winner exit method
-                    if (pause)
-                        return;
+                    //move the car back to the previous place
+                    car.setCol(col);
+                    car.setRow(row);
                 }
             }
-            
-            //if a car completed a lap play sound effect
-            if (lapCompleted)
-                engine.getResources().playGameAudio(GameAudio.Keys.Lap);
-            
-            //if collision honk car horn
-            if (collision)
-                engine.getResources().playGameAudio(GameAudio.Keys.Horn);
+
+            //if the current number of laps has increased we have completed a lap
+            if (car.getTracker().getLaps() > laps)
+            {
+                //get the number of laps required for the current map we are racing
+                final int required = engine.getManager().getMaps().getMap().getLaps();
+
+                //if this car has completed the required amoun of laps for the race
+                if (car.getTracker().getLaps() >= required)
+                {
+                    //stop all sound
+                    engine.getResources().stopAllSound();
+
+                    //mark the race complete
+                    this.setRaceComplete(true);
+
+                    //did the human finish well enough to qualify for the next race
+                    setWin(getHuman().getRank() < getSize());
+                    
+                    //don't continue since race completed
+                    return;
+                }
+                else
+                {
+                    //only play the sound effect for the human
+                    if (car.isHuman())
+                    {
+                        //a car has completed a lap
+                        lapCompleted = true;
+                    }
+                }
+
+                //if a car has completed the race exit method
+                if (hasRaceCompleted())
+                    return;
+            }
         }
+
+        //if a car completed a lap play sound effect
+        if (lapCompleted)
+            engine.getResources().playGameAudio(GameAudio.Keys.Lap);
+
+        //if collision honk car horn
+        if (collision)
+            engine.getResources().playGameAudio(GameAudio.Keys.Horn);
     }
     
     /**
@@ -401,7 +412,7 @@ public class Cars implements Disposable, IElement
      * @param engine Object containing all game elements
      * @throws Exception If there is no human car an exception will be thrown
      */
-    private void adjustCars(final Engine engine) throws Exception
+    public void adjustCars(final Engine engine) throws Exception
     {
         //the current map used
         final StaticMap map = engine.getManager().getMaps().getMap();
@@ -416,19 +427,15 @@ public class Cars implements Disposable, IElement
         final double humanX = map.getAdjustedX(human, screen);
         final double humanY = map.getAdjustedY(human, screen);
         
+        //do we apply the handicap to the human car, if the mode is enabled, default to true
+        boolean applyHumanHandicap = (handicap) ? true : false;
+        
         for (int i = 0; i < cars.size(); i++)
         {
             Car car = cars.get(i);
             
             if (!car.isHuman())
             {
-                if (Shared.DEBUG)
-                {
-                    //if not on road display notification
-                    if (!map.getTrack().isRoad(car))
-                        System.out.println("Car went off road: " + car.getName());
-                }
-                
                 //get the coordinates of the specified cpu car
                 final double x = map.getAdjustedX(car, screen);
                 final double y = map.getAdjustedY(car, screen);
@@ -443,38 +450,47 @@ public class Cars implements Disposable, IElement
                 //if handicap is enabled
                 if (handicap)
                 {
+                    //the progress difference between cpu and human
+                    double progress = car.getTracker().getRaceProgress() - human.getTracker().getRaceProgress();
+                    
                     //if the car is ahead of the human
-                    if (car.getTracker().getRaceProgress() > human.getTracker().getRaceProgress())
+                    if (progress > 0)
                     {
-                        //if the cpu car is further from the human than the handicap limit, slow down the cpu car
-                        if (car.getTracker().getRaceProgress() - human.getTracker().getRaceProgress() > HANDICAP_LIMIT)
-                        {
-                            car.getAttributes().applyHandicap(true);
+                        if (progress > HANDICAP_LIMIT) 
+                        { 
+                            //cpu if far enough ahead of the human, so apply handicap
+                            car.getAttributes().applyHandicap();
                         }
                         else
                         {
-                            //if not too far away disable handicap mode
+                            //cpu if not far away, so no handicap
                             car.getAttributes().disableHandicap();
                         }
                     }
                     else
                     {
-                        //if the human is further from the cpu than the handicap limit, speed up the cpu
-                        if (human.getTracker().getRaceProgress() - car.getTracker().getRaceProgress() > HANDICAP_LIMIT)
-                        {
-                            car.getAttributes().applyHandicap(false);
-                        }
-                        else
-                        {
-                            //if not too far away disable handicap mode
-                            car.getAttributes().disableHandicap();
-                        }
+                        //flip to make positive
+                        progress = -progress;
+                        
+                        //if the difference is less than the limit, the human won't need the handicap
+                        if (progress < HANDICAP_LIMIT)
+                            applyHumanHandicap = false;
                     }
                 }
             }
             
             //we only want to draw the car if it is on the screen
             car.setRender(screen.contains(car.getX(), car.getY()));
+        }
+        
+        //do we need to apply the handicap to the human
+        if (applyHumanHandicap)
+        {
+            human.getAttributes().applyHandicap();
+        }
+        else
+        {
+            human.getAttributes().disableHandicap();
         }
     }
     
@@ -505,7 +521,7 @@ public class Cars implements Disposable, IElement
         Car tmp;
         
         //continue as long as objects have been swapped
-        while (swapped) 
+        while (swapped)
         {
             swapped = false;
             j++;
@@ -540,6 +556,14 @@ public class Cars implements Disposable, IElement
                     //swap objects
                     cars.set(i, cars.get(i + 1));
                     cars.set(i + 1, tmp);
+                    
+                    //if not sorting by location set the rank
+                    if (!byLocation)
+                    {
+                        //set the rank according
+                        cars.get(i).setRank(i + 1);
+                        cars.get(i + 1).setRank(i + 2);
+                    }
                     
                     //flag that objects are swapped
                     swapped = true;

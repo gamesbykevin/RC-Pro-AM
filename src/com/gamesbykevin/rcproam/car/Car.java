@@ -28,6 +28,9 @@ public abstract class Car extends Sprite implements Disposable, IElement
     //the current count
     private int count = 0;
     
+    //the car rank in a race 1st, 2nd, 3rd, etc...
+    private int rank = 0;
+    
     //things a car can do
     private boolean turnLeft = false;
     private boolean turnRight = false;
@@ -79,6 +82,9 @@ public abstract class Car extends Sprite implements Disposable, IElement
         //the cars attributes
         this.attributes = new Attributes();
         
+        //create new track tracker
+        this.tracker = new TrackProgress();
+        
         //create sprite sheet
         super.createSpriteSheet();
         
@@ -115,8 +121,52 @@ public abstract class Car extends Sprite implements Disposable, IElement
         //make sure appropriate animation is displayed
         correctAnimation();
         
-        //create new track tracker
-        this.tracker = new TrackProgress();
+        //reset
+        reset();
+    }
+    
+    public final void reset()
+    {
+        //reset tracker
+        getTracker().reset();
+        
+        //reset handicap
+        getAttributes().reset();
+        
+        //reset facing angle as well
+        setAngle(Math.toRadians(START_ANGLE));
+        
+        //stop turning and accelerating
+        setTurnLeft(false);
+        setTurnRight(false);
+        setAccelerate(false);
+        
+        //then correct the animtation
+        correctAnimation();
+        
+        //reset velocity
+        resetVelocity();
+        
+        //reset turn count
+        this.count = 0;
+    }
+    
+    /**
+     * Set the car rank
+     * @param rank The position the car is in
+     */
+    public void setRank(final int rank)
+    {
+        this.rank = rank;
+    }
+    
+    /**
+     * Get the car rank
+     * @return The position the car is in 1st, 2nd, 3rd represented as an Integer
+     */
+    public int getRank()
+    {
+        return this.rank;
     }
     
     /**

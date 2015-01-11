@@ -21,6 +21,7 @@ public final class GameImages extends ImageManager
         RaceCarRed, RaceCarBlue, RaceCarOrange, RaceCarGreen,
         Track01, Track02, Track03, Track04, Track05, 
         Track06, Track07, Track08, 
+        GameOver, Win
     }
     
     public GameImages() throws Exception

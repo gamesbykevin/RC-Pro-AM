@@ -88,8 +88,8 @@ public final class Human extends Car
         if (isTurningLeft() || isTurningRight())
         {
             //check if the difference is enough to play the turn car angle
-            if (facingAngle - getFacingAngle() >= TURN_INTERVAL ||
-                getFacingAngle() - facingAngle >= TURN_INTERVAL)
+            if (facingAngle - getFacingAngle() > TURN_INTERVAL ||
+                getFacingAngle() - facingAngle > TURN_INTERVAL)
             {
                 //make sure we are on the road as well
                 if (track.isRoad(this))

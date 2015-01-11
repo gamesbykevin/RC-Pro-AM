@@ -236,6 +236,7 @@ public final class Track implements Disposable
                 addCheckPoint(54, 26);
                 addCheckPoint(45, 26);
                 addCheckPoint(41, 29);
+                addCheckPoint(41, 33.5);
                 addCheckPoint(38, 33.5);
                 
                 //this is the finish line

@@ -3,7 +3,6 @@ package com.gamesbykevin.rcproam.car;
 import com.gamesbykevin.framework.base.Cell;
 
 import com.gamesbykevin.rcproam.map.Track;
-import com.gamesbykevin.rcproam.shared.Shared;
 
 /**
  * This class will contain a given cars attributes
@@ -48,17 +47,11 @@ public class Attributes
     //when not accelerating slow down the momentum so it will take the car longer to accelerate back to max speed
     protected static final double SPEED_DECELERATE = 0.975;
     
-    //the increase to apply if handicap mode is enabled
-    private static final double HANDICAP_RATE_INCREASE = 1.1;
-    
     //the decrease to apply if handicap mode is enabled
-    private static final double HANDICAP_RATE_DECREASE = .9;
+    private static final double HANDICAP_RATE_DECREASE = .85;
     
     //do we apply the handicap to this cars attributes
     private boolean handicap = false;
-    
-    //which handicap do we apply (true = speed up, false = speed down)
-    private boolean penalty = false;
     
     /**
      * Get the amount of updates required to turn the car 15 degrees
@@ -71,11 +64,15 @@ public class Attributes
     
     /**
      * Reset the attributes.<br>
-     * Currently this will only turn handicap mode off
+     * Currently this will only turn handicap mode off and reset the speed
      */
     public void reset()
     {
+        //turn handicap off for this cars attributes
         disableHandicap();
+        
+        //stop speed
+        setSpeed(0);
     }
     
     /**
@@ -169,13 +166,10 @@ public class Attributes
     
     /**
      * Enable handicap mode for this car
-     * @param penalty If true the max speed will decrease, if false the max speed will increase
      */
-    public void applyHandicap(final boolean penalty)
+    public void applyHandicap()
     {
         this.handicap = true;
-        
-        this.penalty = penalty;
     }
     
     /**
@@ -205,16 +199,8 @@ public class Attributes
         //if we have handicap we will adjust max speed
         if (hasHandicap())
         {
-            if (!penalty)
-            {
-                //increase max road speed since we are not penalized
-                setMaxSpeed(getMaxSpeed() * HANDICAP_RATE_INCREASE);
-            }
-            else
-            {
-                //decrease max road speed since we are penalized
-                setMaxSpeed(getMaxSpeed() * HANDICAP_RATE_DECREASE);
-            }
+            //decrease max road speed since we are penalized
+            setMaxSpeed(getMaxSpeed() * HANDICAP_RATE_DECREASE);
         }
     }
 }

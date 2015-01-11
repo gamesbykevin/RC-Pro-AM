@@ -14,9 +14,7 @@ import java.awt.Color;
 
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.KeyEvent;
 
 /**
  * The parent class that contains all of the game elements
@@ -45,11 +43,25 @@ public final class Manager implements IManager
     private static final int CAR_TYPE_SUV = 1;
     private static final int CAR_TYPE_RACE_CAR = 2;
     
-    //the value of handicap enabled
-    private static final int HANDICAP_ENABLED = 1;
+    //the start delay is 5 seconds
+    private static final long START_DELAY = Timers.toNanoSeconds(5000L);
     
-    //check cars for collision
-    private static final int COLLISION_ENABLED = 1;
+    //the finish delay is 4 seconds
+    private static final long FINISH_DELAY = Timers.toNanoSeconds(4000L);
+    
+    //the next delay is 2.5 seconds
+    private static final long NEXT_DELAY = Timers.toNanoSeconds(2500L);
+    
+    //the image for win and lose
+    private Image win, lose;
+    
+    private enum Transition
+    {
+        Start, Finish, Next
+    }
+    
+    //the timers for the game transitions
+    private Timers timers;
     
     /**
      * Constructor for Manager, this is the point where we load any menu option configurations
@@ -58,23 +70,24 @@ public final class Manager implements IManager
      */
     public Manager(final Engine engine) throws Exception
     {
-        //determine if sound is enabled
-        final boolean enabled = (Toggle.values()[engine.getMenu().getOptionSelectionIndex(LayerKey.OptionsInGame, OptionKey.Sound)] == Toggle.Off);
-
         //set the audio depending on menu setting
-        engine.getResources().setAudioEnabled(enabled);
+        engine.getResources().setAudioEnabled(Toggle.values()[engine.getMenu().getOptionSelectionIndex(LayerKey.OptionsInGame, OptionKey.Sound)] == Toggle.Off);
         
         //the window available for gameplay
         Rectangle screen = new Rectangle(engine.getMain().getScreen());
         
-        //the height will be smaller
-        screen.height -= 64;
+        //the height will be smaller to make room for the info screen
+        screen.height -= INFO_HEIGHT;
         
         //set the game window where game play will occur
         setWindow(screen);
         
         //do we hide the detail screen
-        setEnableDetailScreen(engine.getMenu().getOptionSelectionIndex(CustomMenu.LayerKey.Options, CustomMenu.OptionKey.EnableDetail) == 0);
+        setEnableDetailScreen(Toggle.values()[engine.getMenu().getOptionSelectionIndex(CustomMenu.LayerKey.Options, CustomMenu.OptionKey.EnableDetail)] == Toggle.Off);
+        
+        //store these images
+        win = engine.getResources().getGameImage(GameImages.Keys.Win);
+        lose = engine.getResources().getGameImage(GameImages.Keys.GameOver);
         
         //maps = new Maps(engine.getResources().getGameImage(GameImages.Keys.Maps), getWindow());
         //hero.setImage(engine.getResources().getGameImage(GameImages.Keys.Heroes));
@@ -93,10 +106,10 @@ public final class Manager implements IManager
             this.cars = new Cars();
             
             //set the handicap setting
-            this.cars.setHandicap(engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.Handicap) == HANDICAP_ENABLED);
+            this.cars.setHandicap(Toggle.values()[engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.Handicap)] == Toggle.On);
             
             //are we checking for collision
-            this.cars.setCheckCollision(engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.Collision) == COLLISION_ENABLED);
+            this.cars.setCheckCollision(Toggle.values()[engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.Collision)] == Toggle.On);
             
             switch (engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.CarType))
             {
@@ -138,8 +151,23 @@ public final class Manager implements IManager
             this.cars.getHuman().setLocation(getWindow());
         }
         
-        //reset cars
-        this.cars.reset();
+        if (this.timers == null)
+        {
+            //create timer container
+            this.timers = new Timers(engine.getMain().getTime());
+            
+            //add timer to wait at race start
+            this.timers.add(Transition.Start, START_DELAY);
+            
+            //add timer after race finish
+            this.timers.add(Transition.Finish, FINISH_DELAY);
+            
+            //add timer for time before race start again
+            this.timers.add(Transition.Next, NEXT_DELAY);
+        }
+        
+        //reset timers
+        this.timers.reset();
         
         //create maps if it does not already exist
         if (this.maps == null)
@@ -194,6 +222,18 @@ public final class Manager implements IManager
             maps = null;
         }
         
+        if (win != null)
+        {
+            win.flush();
+            win = null;
+        }
+        
+        if (lose != null)
+        {
+            lose.flush();
+            lose = null;
+        }
+        
         try
         {
             //recycle objects
@@ -223,7 +263,88 @@ public final class Manager implements IManager
             {
                 //now update the cars
                 if (cars != null)
-                    cars.update(engine);
+                {
+                    if (!timers.hasStarted(Transition.Start))
+                    {
+                        //reset cars
+                        cars.reset(engine.getRandom());
+                        
+                        //play race start sound
+                        engine.getResources().playGameAudio(GameAudio.Keys.RaceStart);
+                        
+                        //update timer
+                        timers.update(Transition.Start);
+                        
+                        //place the cars in perspective to the human racer
+                        cars.adjustCars(engine);
+                    }
+                    else
+                    {
+                        if (!timers.hasTimePassed(Transition.Start))
+                        {
+                            //update timer
+                            timers.update(Transition.Start);
+                        }
+                        else
+                        {
+                            //if the race is not over yet
+                            if (!cars.hasRaceCompleted())
+                            {
+                                //update the cars as long as the race has not completed
+                                cars.update(engine);
+                                
+                                //if the race wasn't complete, but now is
+                                if (cars.hasRaceCompleted())
+                                {
+                                    //play race start sound
+                                    engine.getResources().playGameAudio(GameAudio.Keys.RaceFinish);
+                                }
+                            }
+                            else
+                            {
+                                //if the race is over has the finish time passed
+                                if (!timers.hasTimePassed(Transition.Finish))
+                                {
+                                    //update timer
+                                    timers.update(Transition.Finish);
+                                    
+                                    //if the timer has now finished
+                                    if (timers.hasTimePassed(Transition.Finish))
+                                    {
+                                        //play the next appropriate sound if win/lose
+                                        if (cars.hasWin())
+                                        {
+                                            engine.getResources().playGameAudio(GameAudio.Keys.RaceWin);
+                                            
+                                            //also set the next map
+                                            maps.setMap(engine, maps.getIndex() + 1);
+                                        }
+                                        else
+                                        {
+                                            engine.getResources().playGameAudio(GameAudio.Keys.RaceLose);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    //only continue if win
+                                    if (cars.hasWin())
+                                    {
+                                        //update timer
+                                        timers.update(Transition.Next);
+                                        
+                                        //if the next time has passed move to the next map and reset
+                                        if (timers.hasTimePassed(Transition.Next))
+                                        {
+                                            //reset timers
+                                            timers.reset();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -244,30 +365,53 @@ public final class Manager implements IManager
             }
             else
             {
-                //draw the map
-                maps.render(graphics);
-            
-                //now draw the race cars
-                cars.render(graphics);
-                
-                if (enableDetail)
+                //if the race is finished and the finish timer is complete
+                if (cars.hasRaceCompleted() && timers.hasTimePassed(Transition.Finish))
                 {
-                    //set background color for stats/info screen
-                    graphics.setColor(Color.BLACK);
-                    graphics.fillRect(getWindow().x, getWindow().y + getWindow().height, INFO_WIDTH, INFO_HEIGHT);
+                    if (cars.hasWin())
+                    {
+                        //draw win background
+                        graphics.drawImage(win, 0, 0, null);
+                        
+                        //where the mini-map will be drawn
+                        final int x = getWindow().x + (getWindow().width / 2) - (Maps.MINIMAP_WIDTH / 2);
+                        final int y = getWindow().y + (getWindow().height / 2) + Maps.MINIMAP_HEIGHT;
 
-                    //where the mini-map will be drawn
-                    final int x = getWindow().x + (getWindow().width / 2) - (Maps.MINIMAP_WIDTH / 3);
-                    final int y = getWindow().y + getWindow().height + (INFO_HEIGHT / 2) - (Maps.MINIMAP_HEIGHT / 2);
+                        //draw the mini-map with the cars on the map
+                        maps.renderMiniMap(graphics, null, x, y);
+                    }
+                    else
+                    {
+                        graphics.drawImage(lose, 0, 0, null);
+                    }
+                }
+                else
+                {
+                    //draw the map
+                    maps.render(graphics);
 
-                    //draw the mini-map with the cars on the map
-                    maps.renderMiniMap(graphics, cars, x, y);
+                    //now draw the race cars
+                    cars.render(graphics);
 
-                    //draw human car info
-                    cars.renderTimeInfo(graphics, getWindow().x + 1, getWindow().y + getWindow().height + (INFO_HEIGHT / 5), maps.getMap().getLaps());
+                    if (enableDetail)
+                    {
+                        //set background color for stats/info screen
+                        graphics.setColor(Color.BLACK);
+                        graphics.fillRect(getWindow().x, getWindow().y + getWindow().height, INFO_WIDTH, INFO_HEIGHT);
 
-                    //draw the leaderboard
-                    cars.renderLeaderboard(graphics, x + (int)(Maps.MINIMAP_WIDTH * 1.1), getWindow().y + getWindow().height + (INFO_HEIGHT / 5));
+                        //where the mini-map will be drawn
+                        final int x = getWindow().x + (getWindow().width / 2) - (Maps.MINIMAP_WIDTH / 3);
+                        final int y = getWindow().y + getWindow().height + (INFO_HEIGHT / 2) - (Maps.MINIMAP_HEIGHT / 2);
+
+                        //draw the mini-map with the cars on the map
+                        maps.renderMiniMap(graphics, cars, x, y);
+
+                        //draw human car info
+                        cars.renderTimeInfo(graphics, getWindow().x + 1, getWindow().y + getWindow().height + (INFO_HEIGHT / 5), maps.getMap().getLaps());
+
+                        //draw the leaderboard
+                        cars.renderLeaderboard(graphics, x + (int)(Maps.MINIMAP_WIDTH * 1.1), getWindow().y + getWindow().height + (INFO_HEIGHT / 5));
+                    }
                 }
             }
         }

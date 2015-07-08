@@ -495,7 +495,7 @@ public class Cars implements Disposable, IElement
     }
     
     @Override
-    public void render(final Graphics graphics)
+    public void render(final Graphics graphics) throws Exception
     {
         //first order the cars to be rendered in the appropriate order
         sortCars(true);

@@ -623,7 +623,7 @@ public abstract class Car extends Sprite implements Disposable, IElement
     }
     
     @Override
-    public void render(final Graphics graphics)
+    public void render(final Graphics graphics) throws Exception
     {
         //draw car animation
         super.draw(graphics);

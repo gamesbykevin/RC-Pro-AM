@@ -297,7 +297,7 @@ public class Maps implements IElement, Disposable
     }
     
     @Override
-    public void render(final Graphics graphics)
+    public void render(final Graphics graphics) throws Exception
     {
         //if loading draw the progress
         if (isLoading())

@@ -290,7 +290,7 @@ public final class StaticMap extends Sprite implements Disposable
         super.dispose();
     }
     
-    public void render(final Graphics graphics)
+    public void render(final Graphics graphics) throws Exception
     {
         int dx1 = 0;
         int dy1 = 0;
